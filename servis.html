@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Servis Teklif Hesaplayıcı · Marine Suite</title>
+  <style>
+    /* ── Temel değişkenler ── */
+    :root {
+      --navy:    #0a1628;
+      --ocean:   #0d3b6e;
+      --sea:     #1565a7;
+      --wave:    #2196f3;
+      --foam:    #e8f4fd;
+      --accent:  #00bcd4;
+      --gold:    #f0a500;
+      --danger:  #e53935;
+      --text:    #1a2740;
+      --muted:   #607d8b;
+      --card:    #ffffff;
+      --border:  #cfd8e3;
+      --radius:  12px;
+      --shadow:  0 4px 20px rgba(10,22,40,.12);
+      --bg-body-1: #0a1628;
+      --bg-body-2: #0d3b6e;
+      --bg-body-3: #113d70;
+    }
+
+    /* ── Gece modu değişkenleri ── */
+    [data-theme="dark"] {
+      --navy:    #060d1a;
+      --ocean:   #0a2340;
+      --sea:     #0f3d6e;
+      --wave:    #1976d2;
+      --foam:    #0d1f35;
+      --accent:  #00bcd4;
+      --gold:    #f0a500;
+      --danger:  #e53935;
+      --text:    #cfd8e3;
+      --muted:   #78909c;
+      --card:    #0e1e33;
+      --border:  #1e3a5a;
+      --shadow:  0 4px 20px rgba(0,0,0,.4);
+      --bg-body-1: #050c18;
+      --bg-body-2: #070f1e;
+      --bg-body-3: #080f1d;
+    }
+
+    /* ── Gündüz modu değişkenleri ── */
+    [data-theme="light"] {
+      --navy:    #0a1628;
+      --ocean:   #0d3b6e;
+      --sea:     #1565a7;
+      --wave:    #2196f3;
+      --foam:    #e8f4fd;
+      --accent:  #00bcd4;
+      --gold:    #f0a500;
+      --danger:  #e53935;
+      --text:    #1a2740;
+      --muted:   #607d8b;
+      --card:    #ffffff;
+      --border:  #cfd8e3;
+      --shadow:  0 4px 20px rgba(10,22,40,.12);
+      --bg-body-1: #0a1628;
+      --bg-body-2: #0d3b6e;
+      --bg-body-3: #113d70;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(160deg, var(--bg-body-1) 0%, var(--bg-body-2) 60%, var(--bg-body-3) 100%);
+      min-height: 100vh;
+      color: var(--text);
+      padding: 24px 16px 60px;
+      transition: background .3s, color .3s;
+    }
+
+    /* ── Tema toggle butonu ── */
+    .theme-toggle {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 999;
+      background: rgba(255,255,255,.12);
+      border: 1.5px solid rgba(255,255,255,.25);
+      border-radius: 50px;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      backdrop-filter: blur(8px);
+      transition: background .2s, border-color .2s;
+      user-select: none;
+    }
+    .theme-toggle:hover { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.4); }
+    .theme-toggle .toggle-icon { font-size: 16px; line-height: 1; }
+    .theme-toggle .toggle-label { font-size: 12px; }
+
+    [data-theme="dark"] .theme-toggle {
+      background: rgba(0,0,0,.35);
+      border-color: rgba(0,188,212,.35);
+      color: var(--accent);
+    }
+    [data-theme="dark"] .theme-toggle:hover {
+      background: rgba(0,0,0,.5);
+      border-color: rgba(0,188,212,.6);
+    }
+
+    /* ── Üst başlık ── */
+    .app-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .nav-back {
+      display: inline-block;
+      color: rgba(255,255,255,.55);
+      font-size: 12px;
+      text-decoration: none;
+      margin-bottom: 14px;
+      transition: color .2s;
+    }
+    .nav-back:hover { color: var(--accent); }
+
+    .app-badge {
+      display: inline-block;
+      background: rgba(0,188,212,.15);
+      border: 1px solid rgba(0,188,212,.4);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+    .app-header h1 {
+      font-size: clamp(22px, 5vw, 36px);
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.2;
+    }
+    .app-header h1 span { color: var(--accent); }
+    .app-header p {
+      color: rgba(255,255,255,.6);
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    /* ── Kart ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ocean);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--foam);
+    }
+    [data-theme="dark"] .card-title { color: var(--accent); border-bottom-color: var(--border); }
+    .card-title .icon {
+      width: 32px; height: 32px;
+      background: var(--foam);
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-size: 16px;
+    }
+    [data-theme="dark"] .card-title .icon { background: var(--border); }
+
+    /* ── Form grid ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group.third { grid-column: span 1; }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .input-wrap {
+      display: flex;
+      align-items: center;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color .2s;
+      background: var(--card);
+    }
+    .input-wrap:focus-within { border-color: var(--wave); box-shadow: 0 0 0 3px rgba(33,150,243,.12); }
+    .input-wrap input, .input-wrap select {
+      border: none;
+      outline: none;
+      flex: 1;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text);
+      background: transparent;
+      width: 100%;
+    }
+    .input-unit {
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      white-space: nowrap;
+      border-left: 1px solid var(--border);
+      height: 100%;
+      min-height: 40px;
+      display: grid;
+      place-items: center;
+      background: var(--foam);
+    }
+    [data-theme="dark"] .input-unit { background: var(--border); }
+
+    /* ── Tekne tipi radio ── */
+    .boat-type-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 500px) { .boat-type-grid { grid-template-columns: repeat(2, 1fr); } }
+    .boat-radio { display: none; }
+    .boat-radio-label {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      padding: 12px 8px 10px;
+      cursor: pointer;
+      transition: all .2s;
+      text-align: center;
+      display: block;
+    }
+    .boat-radio-label:hover { border-color: var(--wave); background: var(--foam); }
+    .boat-radio:checked + .boat-radio-label {
+      border-color: var(--wave);
+      background: linear-gradient(135deg, var(--foam), #d6eeff);
+      box-shadow: 0 0 0 3px rgba(33,150,243,.18);
+    }
+    [data-theme="dark"] .boat-radio:checked + .boat-radio-label {
+      background: linear-gradient(135deg, #0d2b4a, #0f3860);
+    }
+    .boat-radio-label .bi { font-size: 24px; display: block; margin-bottom: 6px; }
+    .boat-radio-label .bl {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ocean);
+      line-height: 1.3;
+    }
+    [data-theme="dark"] .boat-radio-label .bl { color: var(--accent); }
+
+    /* ── Kaydet butonu ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all .2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--wave), var(--sea));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(33,150,243,.35);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(33,150,243,.45); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-sm { padding: 7px 14px; font-size: 12px; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #c62828; }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), #e08c00);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(240,165,0,.35);
+    }
+    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(240,165,0,.45); }
+
+    .save-row { display: flex; justify-content: flex-end; margin-top: 20px; }
+
+    /* ── Kategori tabları ── */
+    .tab-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 20px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .tab-scroll::-webkit-scrollbar { height: 4px; }
+    .tab-scroll::-webkit-scrollbar-track { background: transparent; }
+    .tab-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .tab-pill {
+      flex-shrink: 0;
+      padding: 8px 16px;
+      border-radius: 50px;
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .tab-pill:hover { border-color: var(--wave); color: var(--wave); }
+    .tab-pill.active {
+      background: var(--wave);
+      border-color: var(--wave);
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(33,150,243,.35);
+    }
+
+    /* ── Hizmet kartları grid ── */
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 600px) { .service-grid { grid-template-columns: 1fr; } }
+
+    .service-card {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      background: var(--card);
+      transition: border-color .2s, box-shadow .2s;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .service-card:hover { border-color: var(--wave); box-shadow: 0 2px 12px rgba(33,150,243,.12); }
+
+    .sc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .sc-name { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.35; flex: 1; }
+    .sc-price {
+      font-size: 13px;
+      font-weight: 800;
+      color: #18a651;
+      white-space: nowrap;
+      background: rgba(24,166,81,.1);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .sc-desc { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+    .sc-select {
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 10px;
+      font-size: 12px;
+      color: var(--text);
+      background: var(--card);
+      outline: none;
+      width: 100%;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    .sc-select:focus { border-color: var(--wave); }
+    .sc-footer { display: flex; justify-content: flex-end; }
+    .btn-add {
+      padding: 7px 16px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1.5px solid var(--wave);
+      color: var(--wave);
+      background: transparent;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-add:hover {
+      background: var(--wave);
+      color: #fff;
+    }
+
+    /* ── İş listesi tablosu ── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead tr {
+      background: var(--foam);
+    }
+    [data-theme="dark"] thead tr { background: var(--border); }
+    thead th {
+      padding: 11px 14px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--ocean);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      white-space: nowrap;
+    }
+    [data-theme="dark"] thead th { color: var(--accent); }
+    tbody tr {
+      border-top: 1px solid var(--border);
+      transition: background .15s;
+    }
+    tbody tr:hover { background: rgba(33,150,243,.04); }
+    tbody td { padding: 10px 14px; vertical-align: top; }
+    .td-num { color: var(--muted); font-size: 12px; width: 32px; }
+    .td-name { font-weight: 600; color: var(--text); min-width: 160px; }
+    .td-detail { color: var(--muted); font-size: 12px; min-width: 120px; }
+    .td-note { font-size: 11px; color: var(--accent); font-style: italic; margin-top: 3px; }
+    .td-price { font-weight: 700; color: var(--text); white-space: nowrap; }
+    .td-qty input {
+      width: 60px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--card);
+      text-align: center;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .td-qty input:focus { border-color: var(--wave); }
+    .td-total { font-weight: 800; color: var(--ocean); white-space: nowrap; }
+    [data-theme="dark"] .td-total { color: var(--accent); }
+    .td-del button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--danger);
+      font-size: 16px;
+      padding: 4px 6px;
+      border-radius: 5px;
+      transition: background .2s;
+    }
+    .td-del button:hover { background: rgba(229,57,53,.12); }
+
+    /* ── Boş durum ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+    .empty-state .es-icon { font-size: 48px; margin-bottom: 14px; display: block; opacity: .5; }
+    .empty-state p { font-size: 14px; font-weight: 500; }
+    .empty-state small { font-size: 12px; opacity: .7; display: block; margin-top: 6px; }
+
+    /* ── Toplamlar kutusu ── */
+    .totals-box {
+      margin-top: 20px;
+      border-top: 2px solid var(--border);
+      padding-top: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .totals-row {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      font-size: 14px;
+    }
+    .totals-row .tl { color: var(--muted); font-weight: 600; min-width: 150px; text-align: right; }
+    .totals-row .tv { font-weight: 700; color: var(--text); min-width: 100px; text-align: right; }
+    .totals-divider {
+      width: 280px;
+      border: none;
+      border-top: 1.5px solid var(--border);
+      margin: 4px 0;
+    }
+    .totals-row.grand .tl { font-size: 16px; font-weight: 800; color: var(--text); }
+    .totals-row.grand .tv { font-size: 20px; font-weight: 900; color: var(--gold); }
+
+    /* ── Teklif özeti bölümü ── */
+    .quote-header-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 500px) { .quote-header-info { grid-template-columns: 1fr; } }
+
+    .firm-box {
+      background: var(--foam);
+      border-radius: 10px;
+      padding: 16px;
+      border: 1.5px dashed var(--border);
+    }
+    [data-theme="dark"] .firm-box { background: var(--border); }
+    .firm-box .fb-label { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .firm-box .fb-name { font-size: 16px; font-weight: 800; color: var(--ocean); margin-bottom: 4px; }
+    [data-theme="dark"] .firm-box .fb-name { color: var(--accent); }
+    .firm-box .fb-sub { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    .client-box {
+      background: var(--foam);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    [data-theme="dark"] .client-box { background: var(--border); }
+    .client-box .cb-label { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .client-box .cb-row { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+    .client-box .cb-row span { font-weight: 700; }
+
+    .quote-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .quote-no {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .quote-date {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .print-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    /* ── Bildirim toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--ocean);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 8px 28px rgba(0,0,0,.3);
+      z-index: 9999;
+      transition: transform .3s ease;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Sayfa max genişliği ── */
+    .container { max-width: 960px; margin: 0 auto; }
+
+    /* ── YAZDIRMA STILI ── */
+    @media print {
+      body {
+        background: #fff !important;
+        color: #000 !important;
+        padding: 0;
+      }
+      .theme-toggle, .tab-scroll, .service-section,
+      .btn-add, .td-del, .btn, .print-actions,
+      .save-row, .nav-back, section#section-services {
+        display: none !important;
+      }
+      .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd;
+        break-inside: avoid;
+      }
+      .app-header { color: #000; }
+      .app-header h1, .app-header h1 span { color: #000; }
+      .app-header p, .app-badge { color: #555; }
+      thead tr { background: #e8f4fd !important; }
+      thead th { color: #0d3b6e !important; }
+      .totals-row.grand .tv { color: #c88400 !important; }
+      .td-qty input { border: none; background: transparent; font-size: 13px; font-weight: 700; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ── Tema butonu ── -->
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Tema değiştir">
+    <span class="toggle-icon" id="themeIcon">🌙</span>
+    <span class="toggle-label" id="themeLabel">Gece</span>
+  </button>
+
+  <div class="container">
+    <!-- ── Üst başlık ── -->
+    <header class="app-header">
+      <div>
+        <a href="index.html" class="nav-back">← Modül 1: Su Altı Bakım</a>
+      </div>
+      <div class="app-badge">⚓ Marine Suite · Modül 2</div>
+      <h1>Servis <span>Teklif</span> Hesaplayıcı</h1>
+      <p>Servis kalemlerini seçin, otomatik fiyatlandırın, teklif oluşturun</p>
+    </header>
+
+    <!-- ══════════════════════════════════════════
+         BÖLÜM 1: PROJE BİLGİLERİ
+    ══════════════════════════════════════════ -->
+    <section id="section-project">
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">📋</span>
+          Proje Bilgileri
+        </div>
+
+        <div class="form-grid">
+          <!-- Müşteri Adı -->
+          <div class="form-group">
+            <label for="musteri_adi">Müşteri Adı</label>
+            <div class="input-wrap">
+              <input type="text" id="musteri_adi" placeholder="Ad Soyad / Firma" />
+            </div>
+          </div>
+
+          <!-- Tekne Adı -->
+          <div class="form-group">
+            <label for="tekne_adi">Tekne Adı</label>
+            <div class="input-wrap">
+              <input type="text" id="tekne_adi" placeholder="S/Y Deniz, M/Y Akdeniz..." />
+            </div>
+          </div>
+
+          <!-- Tekne Tipi (radio) -->
+          <div class="form-group full">
+            <label>Tekne Tipi</label>
+            <div class="boat-type-grid">
+              <div>
+                <input type="radio" name="tekne_tipi" id="tt_yelkenli" value="yelkenli" class="boat-radio" />
+                <label for="tt_yelkenli" class="boat-radio-label">
+                  <span class="bi">⛵</span>
+                  <span class="bl">Yelkenli</span>
+                </label>
+              </div>
+              <div>
+                <input type="radio" name="tekne_tipi" id="tt_motoryat" value="motor yat" class="boat-radio" />
+                <label for="tt_motoryat" class="boat-radio-label">
+                  <span class="bi">🛥️</span>
+                  <span class="bl">Motor Yat</span>
+                </label>
+              </div>
+              <div>
+                <input type="radio" name="tekne_tipi" id="tt_katamaran" value="katamaran" class="boat-radio" />
+                <label for="tt_katamaran" class="boat-radio-label">
+                  <span class="bi">🚢</span>
+                  <span class="bl">Katamaran</span>
+                </label>
+              </div>
+              <div>
+                <input type="radio" name="tekne_tipi" id="tt_distantakma" value="dıştan takma" class="boat-radio" />
+                <label for="tt_distantakma" class="boat-radio-label">
+                  <span class="bi">⚙️</span>
+                  <span class="bl">Dıştan Takma</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- LOA -->
+          <div class="form-group">
+            <label for="loa_ft">LOA (feet)</label>
+            <div class="input-wrap">
+              <input type="number" id="loa_ft" placeholder="38" min="10" max="200" />
+              <span class="input-unit">ft</span>
+            </div>
+          </div>
+
+          <!-- Kuyruk Tipi -->
+          <div class="form-group">
+            <label for="kuyruk_tipi">Kuyruk Tipi</label>
+            <div class="input-wrap">
+              <select id="kuyruk_tipi">
+                <option value="">— Seçin —</option>
+                <option value="DPI vb.">DPI vb.</option>
+                <option value="ZT350 vb.">ZT350 vb.</option>
+                <option value="Sdrive (VOLVO)">Sdrive (VOLVO)</option>
+                <option value="Sdrive (YANMAR)">Sdrive (YANMAR)</option>
+                <option value="IPS (VOLVO)">IPS (VOLVO)</option>
+                <option value="Yok">Yok</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- KDV -->
+          <div class="form-group">
+            <label for="kdv_oran">KDV %</label>
+            <div class="input-wrap">
+              <input type="number" id="kdv_oran" value="20" min="0" max="100" />
+              <span class="input-unit">%</span>
+            </div>
+          </div>
+
+          <!-- Para Birimi -->
+          <div class="form-group">
+            <label for="para_birimi">Para Birimi</label>
+            <div class="input-wrap">
+              <input type="text" id="para_birimi" value="EUR" />
+              <span class="input-unit">₣</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="save-row">
+          <button class="btn btn-primary" onclick="saveProject()">
+            💾 Kaydet
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         BÖLÜM 2: HİZMET EKLE
+    ══════════════════════════════════════════ -->
+    <section id="section-services">
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">➕</span>
+          Hizmet Ekle
+        </div>
+
+        <!-- Kategori tabları -->
+        <div class="tab-scroll" id="categoryTabs"></div>
+
+        <!-- Hizmet kartları alanı -->
+        <div class="service-section" id="serviceSection"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         BÖLÜM 3: İŞ LİSTESİ
+    ══════════════════════════════════════════ -->
+    <section id="section-list">
+      <div class="card">
+        <div class="card-title">
+          <span class="icon">📝</span>
+          İş Listesi
+        </div>
+
+        <div id="workListContainer">
+          <!-- Tablo veya boş durum buraya render edilir -->
+        </div>
+
+        <!-- Toplamlar kutusu -->
+        <div class="totals-box" id="totalsBox" style="display:none;">
+          <div class="totals-row">
+            <span class="tl">Ara Toplam:</span>
+            <span class="tv" id="sumSubtotal">€0.00</span>
+          </div>
+          <div class="totals-row">
+            <span class="tl">KDV (<span id="kdvPct">%20</span>):</span>
+            <span class="tv" id="sumKdv">€0.00</span>
+          </div>
+          <hr class="totals-divider" />
+          <div class="totals-row grand">
+            <span class="tl">Genel Toplam:</span>
+            <span class="tv" id="sumTotal">€0.00</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         BÖLÜM 4: TEKLİF ÖZETİ
+    ══════════════════════════════════════════ -->
+    <section id="section-quote">
+      <div class="card" id="quotePrintArea">
+        <div class="card-title">
+          <span class="icon">📄</span>
+          Teklif Özeti
+        </div>
+
+        <div class="quote-meta">
+          <span class="quote-no">Teklif No: <strong id="quoteNo">—</strong></span>
+          <span class="quote-date">Tarih: <strong id="quoteDate">—</strong></span>
+        </div>
+
+        <div class="quote-header-info">
+          <!-- Firma bilgisi -->
+          <div class="firm-box">
+            <div class="fb-label">Firma Bilgileri</div>
+            <div class="fb-name">AGM Marine Service</div>
+            <div class="fb-sub">
+              Marmaris Marina, İskele Mah.<br />
+              Tel: +90 252 000 0000<br />
+              info@agmmarine.com
+            </div>
+          </div>
+
+          <!-- Müşteri / Tekne bilgisi -->
+          <div class="client-box" id="clientBoxPrint">
+            <div class="cb-label">Müşteri &amp; Tekne</div>
+            <div class="cb-row">Müşteri: <span id="pMusteriAdi">—</span></div>
+            <div class="cb-row">Tekne: <span id="pTekneAdi">—</span></div>
+            <div class="cb-row">Tip: <span id="pTekneTipi">—</span></div>
+            <div class="cb-row">LOA: <span id="pLoa">—</span></div>
+            <div class="cb-row">Kuyruk: <span id="pKuyruk">—</span></div>
+          </div>
+        </div>
+
+        <!-- Teklif tablo özeti -->
+        <div id="quoteSummaryTable">
+          <!-- renderQuoteSummary() tarafından doldurulur -->
+        </div>
+
+        <!-- Teklif alt toplamları -->
+        <div class="totals-box" id="quoteTotalsBox" style="display:none;">
+          <div class="totals-row">
+            <span class="tl">Ara Toplam:</span>
+            <span class="tv" id="qSumSubtotal">€0.00</span>
+          </div>
+          <div class="totals-row">
+            <span class="tl">KDV (<span id="qKdvPct">%20</span>):</span>
+            <span class="tv" id="qSumKdv">€0.00</span>
+          </div>
+          <hr class="totals-divider" />
+          <div class="totals-row grand">
+            <span class="tl">Genel Toplam:</span>
+            <span class="tv" id="qSumTotal">€0.00</span>
+          </div>
+        </div>
+
+        <div class="print-actions">
+          <button class="btn btn-primary" onclick="renderQuoteSummary()">🔄 Özeti Güncelle</button>
+          <button class="btn btn-gold" onclick="printQuote()">🖨️ Yazdır / PDF</button>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /container -->
+
+  <!-- ── Toast bildirimi ── -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ══════════════════════════════════════════
+       JAVASCRIPT
+  ══════════════════════════════════════════ -->
+  <script>
+    /* ───────────────────────────────────────────
+       RATE CARDS VERİ TABLOSU
+    ─────────────────────────────────────────── */
+    const RATE_CARDS = {
+      motor: {
+        title: "Motor Atölyesi",
+        icon: "🔧",
+        kuyruk_items: [
+          { id: "saildrive_routine", name: "Kuyruk Servisi (Sökümsüz)", desc: "Periyodik yağ/tutya değişimi ve kontroller (200 saat / 1 yıl)", prices: {"DPI vb.":260,"ZT350 vb.":350,"Sdrive (VOLVO)":100,"Sdrive (YANMAR)":125,"IPS (VOLVO)":500} },
+          { id: "saildrive_bellows", name: "Kuyruk Körük Değişimi", desc: "Tahrik sistemi sızdırmazlık körüklerinin yenilenmesi (işçilik)", prices: {"DPI vb.":400,"ZT350 vb.":400,"Sdrive (VOLVO)":600,"Sdrive (YANMAR)":600,"IPS (VOLVO)":800} },
+          { id: "alt_govde_boya", name: "Alt Gövde Servis ve Boyama", desc: "Kuyruk alt gövde temizliği ve özel kuyruk zehirlisi uygulaması", prices: {"DPI vb.":150,"ZT350 vb.":150,"Sdrive (VOLVO)":100,"Sdrive (YANMAR)":100,"IPS (VOLVO)":200} },
+          { id: "cone_clutch", name: "Konik Kavrama (Cone Clutch) Alıştırma/Değişim", desc: "", prices: {"DPI vb.":400,"ZT350 vb.":400,"Sdrive (VOLVO)":400,"Sdrive (YANMAR)":400,"IPS (VOLVO)":0} },
+          { id: "prizdirek_kece", name: "Prizdirek ve Krank Keçesi Değişimi", desc: "", prices: {"DPI vb.":500,"ZT350 vb.":500,"Sdrive (VOLVO)":500,"Sdrive (YANMAR)":500,"IPS (VOLVO)":700} },
+          { id: "wet_clutch", name: "Islak Kavrama (Wet Clutch) Revizyonu", desc: "", prices: {"DPI vb.":900,"ZT350 vb.":900,"Sdrive (VOLVO)":600,"Sdrive (YANMAR)":600,"IPS (VOLVO)":1200} }
+        ],
+        hp_items: [
+          { id: "dt_servis", name: "Dıştan Takma Motor Servisi", desc: "Yağ/filtre/impeler değişimi ve genel kontroller (100 saat / 6 ay)", prices: {"2-5 HP":97,"8-20 HP":130,"25 HP":156,"30-40 HP":210,"50-70 HP":260,"80-130 HP":330,"150-200 HP":370,"225-300 HP":430,"375-425 HP":510} },
+          { id: "karburator", name: "Karbüratör Bakımı (Dıştan Takma)", desc: "Dıştan takma motor yakıt sistemi ve karbüratör bakımı", prices: {"2-5 HP":34,"8-20 HP":46,"25 HP":70,"30-40 HP":100,"50-70 HP":120,"80-130 HP":160,"150-200 HP":180,"225-300 HP":280,"375-425 HP":380} }
+        ],
+        fixed_items: [
+          { id: "icten_dijagnostik", name: "İçten Takma Bilgisayarlı Diyagnostik", desc: "Bilgisayar yardımı ile sorun tespiti ve genel testler", price: 200 },
+          { id: "distan_dijagnostik", name: "Dıştan Takma Bilgisayarlı Diyagnostik", desc: "Dıştan takma bilgisayarlı arıza tespiti", price: 120 },
+          { id: "dt_depolama", name: "Dıştan Takma Depolama (Aylık)", desc: "Aylık depolama hizmeti", price: 15 },
+          { id: "sanziman_yag", name: "Şanzıman Periyodik Bakımı (Yağ Değişimi)", desc: "KM, ZF, TM tipi şanzımanların yağ değişimi ve seviye kontrolü", price: 75 }
+        ]
+      },
+      boya: {
+        title: "Boya & Bakım",
+        icon: "🎨",
+        galon_items: [
+          { id: "zehirli_boya_uyg", name: "Zehirli Boya Uygulaması", desc: "Karina zehirli boya işleri — yüzey hazırlığı, astar (gerekirse), uygulama. KDV dahil değil.", prices: {"1 Galon":170,"2 Galon":250,"3 Galon":280,"4 Galon":350,"5 Galon":500,"6 Galon":650} }
+        ],
+        feet_items: [
+          { id: "borda_pasta_cila", name: "Borda Pasta ve Cilası", desc: "CTP gövdeli teknelerde jelkotlu yüzeylerin pasta ve cilası", prices: {"≤25 ft":100,"26–30 ft":150,"31–35 ft":250,"36–40 ft":350,"41–45 ft":450,"46–50 ft":550,"51–55 ft":650,"56–60 ft":800,"61–70 ft":1000,"71 ft +":1300} }
+        ]
+      },
+      mekanik: {
+        title: "Mekanik & Torna",
+        icon: "⚙️",
+        power_items: [
+          { id: "irgat_mekanik", name: "Irgat Mekanik Bakımı", desc: "Irgat sökülmesi, montajı ve bakımları. Malzeme hariç işçilik.", prices: {"500W":200,"700W":250,"1000W":300,"1500W":350} }
+        ],
+        vinc_items: [
+          { id: "vinc_mekanik", name: "Vinç Mekanik Bakımı", desc: "Vincin sökülüp dişlilerinin atölyede temizlenmesi ve montajı. Malzeme hariç.", prices: {"35":150,"40":200,"46":250,"50":300} }
+        ],
+        loa_items: [
+          { id: "dumen_yekesi", name: "Dümen Yekesi Sökümü", desc: "Yekenin ve burçun sökülmesi ve montajı. Yeni burç ayrıca ücretlendirilir.", prices: {"26-35ft":700,"36-45ft":1200,"46-55ft":1500,"56ft ve üstü":2000} },
+          { id: "ana_direk_bumba", name: "Ana Direk ve Bumba Sökümü", desc: "Direk/Bumba sökümü. Karbon/ahşap direklerde fiyat farklılığı olabilir.", prices: {"26-35ft":1500,"36-45ft":3000,"46-55ft":4000,"56ft ve üstü":5000} }
+        ],
+        fixed_items: [
+          { id: "vana_kovan", name: "Vana, Kovan ve Hortum Bağlantı Değişimi", desc: "Bağlantıların değişimi ve sızdırmazlık kontrolü. Sarf malzeme dahil.", price: 220 },
+          { id: "sdrive_pervane", name: "Saildrive Pervane Şaft Mili Tamiratı", desc: "Şaft mili kontrol ve tamiri", price: 250 },
+          { id: "katlanir_pervane", name: "Katlanır Pervane Sökümü/Bakımı/Montajı", desc: "Katlanır pervane periyodik bakımı", price: 200 },
+          { id: "mekanik_saatlik", name: "Genel Mekanik Bakım ve Onarım (Saatlik)", desc: "Tekne üzerindeki işçilik baz alınarak hesaplanır", price: 75 }
+        ]
+      },
+      yelken: {
+        title: "Yelken & Döşeme",
+        icon: "⛵",
+        fixed_items: [
+          { id: "yelken_sokumu", name: "Yelken Sökümü (LOA Feet başına)", desc: "Feet başına söküm ücreti. Fiyat x LOA feet olarak hesaplanır.", price: 1 },
+          { id: "yelken_yikama", name: "Yelken Yıkaması ve Depolama (m²)", desc: "Yelken yıkaması ve atölyede depolanması — m² başına", price: 3.5 },
+          { id: "tente_depolama", name: "Tente/Bimini Atölye Depolama (Aylık)", desc: "Bimini, siperlik, kışlık tente veya yelken için aylık depolama", price: 17.5 }
+        ]
+      },
+      elektrik: {
+        title: "Elektrik",
+        icon: "⚡",
+        fixed_items: [
+          { id: "motor_dinamo", name: "Motor Dinamo Bakımı", desc: "Motor dinamo sökülmesi ve bakımı", price: 150 },
+          { id: "irgat_dinamo", name: "Irgat Dinamo Bakımı", desc: "Irgat dinamo sökülmesi ve bakımı", price: 150 },
+          { id: "elektrik_vinc", name: "Elektrik Vinç Motor Bakımı", desc: "Elektrikli vinç motor sökülmesi ve bakımı", price: 100 },
+          { id: "elektrik_saatlik", name: "Elektrik/Sıhhi Tesisat Onarım (Saatlik)", desc: "Genel elektrik ve sıhhi tesisat işleri için saatlik ücret", price: 75 }
+        ]
+      },
+      diger: {
+        title: "Diğer Servisler",
+        icon: "🌊",
+        fixed_items: [
+          { id: "zincir_galvaniz", name: "Zincir ve Çapa Galvaniz (KG başına)", desc: "Tekneden söküm/montaj hariç. KG başına ücret.", price: 2 },
+          { id: "isitma_sogutma", name: "Isıtma/Soğutma Sistemleri Servis", desc: "Kontrol ve gaz takviyesi dahil", price: 100 },
+          { id: "su_yapici_kislama", name: "Su Yapıcı Kışlama Hizmeti", desc: "Temizleme malzemeleri dahil, filtreler hariç", price: 220 },
+          { id: "direge_tirmanma", name: "Yelkenli Direğine Tırmanma", desc: "Direk üstü kontroller ve müdahale", price: 220 },
+          { id: "dalgiclik", name: "Dalgıçlık Hizmeti", desc: "Genel dalgıçlık hizmetleri", price: 75 },
+          { id: "tekne_alti_temizlik", name: "Dalgıç ile Tekne Altı Temizliği (Saatlik)", desc: "Dalgıç tarafından karina ve pervane temizliği", price: 150 },
+          { id: "ariza_tespit", name: "Arıza Tespit ve Teklif Hazırlama", desc: "Tekne üzerindeki her türlü müdahale ve arıza tespiti", price: 75 }
+        ]
+      },
+      sivi: {
+        title: "Sıvı & Yağlar",
+        icon: "🛢️",
+        volume_items: [
+          { id: "yanmar_15w40", name: "YANMAR 15W40", prices: {"1 LİTRE":14.17,"5 LİTRE":62.5} },
+          { id: "yanmar_antifriz", name: "YANMAR ANTİFRİZ", prices: {"1 LİTRE":10.83,"5 LİTRE":45.83} },
+          { id: "yanmar_sae30", name: "YANMAR SAE 30", prices: {"1 LİTRE":15.83} },
+          { id: "volvo_15w40", name: "VOLVO 15W40", prices: {"1 LİTRE":15,"5 LİTRE":66.67} },
+          { id: "volvo_antifriz", name: "VOLVO ANTİFRİZ", prices: {"1 LİTRE":10.83,"5 LİTRE":45.83} },
+          { id: "volvo_ips_yagi", name: "VOLVO 75W90 IPS YAĞI", prices: {"1 LİTRE":20,"5 LİTRE":96.67} },
+          { id: "quicksilver_25w40", name: "QUICKSILVER 25W40", prices: {"1 LİTRE":25} },
+          { id: "quicksilver_hp", name: "QUICKSILVER HIGH PERFORMANCE", prices: {"1 LİTRE":34.17} },
+          { id: "quicksilver_10w30", name: "QUICKSILVER 10W30", prices: {"1 LİTRE":15.83} },
+          { id: "yamaha_10w40", name: "YAMAHA 10W40 YAMALUBE", prices: {"1 LİTRE":44.17} },
+          { id: "yamaha_gear_oil", name: "YAMAHA SAE 90 GEAR OIL", prices: {"250 ML TÜP":42.5} },
+          { id: "yerli_15w40", name: "YERLİ YAĞ 15W40", prices: {"1 LİTRE":10} },
+          { id: "yerli_10w40", name: "YERLİ YAĞ 10W40", prices: {"1 LİTRE":10.83} },
+          { id: "yerli_antifriz", name: "YERLİ ANTİFRİZ", prices: {"1 LİTRE":9.17} },
+          { id: "atf_dextron", name: "ATF DEXTRON ŞANZIMAN YAĞI", prices: {"1 LİTRE":12.5} },
+          { id: "motul_tekma", name: "MOTUL TEKMA NORMA 20W50", prices: {"5 LİTRE":33.33} },
+          { id: "motul_nautic_gres", name: "MOTUL NAUTIC GRES", prices: {"200 ML TÜP":11.67} },
+          { id: "motul_2t", name: "MOTUL 2T OUTBOARD YAĞ", prices: {"1 LİTRE":20.83} },
+          { id: "motul_translube", name: "MOTUL TRANSLUBE", prices: {"350 ML TÜP":12.5} }
+        ]
+      }
+    };
+
+    /* ───────────────────────────────────────────
+       UYGULAMA DURUMU
+    ─────────────────────────────────────────── */
+    let workList = [];         // Aktif iş kalemleri
+    let activeCategory = 'motor';
+    let itemCounter = 0;       // Benzersiz satır ID'si için
+
+    /* ───────────────────────────────────────────
+       TEMA YÖNETİMİ
+    ─────────────────────────────────────────── */
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const icon = document.getElementById('themeIcon');
+      const label = document.getElementById('themeLabel');
+      if (theme === 'dark') {
+        icon.textContent = '☀️';
+        label.textContent = 'Gündüz';
+      } else {
+        icon.textContent = '🌙';
+        label.textContent = 'Gece';
+      }
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('marine_theme', next);
+      applyTheme(next);
+    }
+
+    /* ───────────────────────────────────────────
+       PROJE BİLGİLERİ
+    ─────────────────────────────────────────── */
+    function saveProject() {
+      const proje = getProjectData();
+      localStorage.setItem('servis_proje', JSON.stringify(proje));
+      showToast('✅ Proje bilgileri kaydedildi');
+      updateQuoteInfo(proje);
+    }
+
+    function getProjectData() {
+      const tekniTipiEl = document.querySelector('input[name="tekne_tipi"]:checked');
+      return {
+        musteri: document.getElementById('musteri_adi').value.trim(),
+        tekne: document.getElementById('tekne_adi').value.trim(),
+        tip: tekniTipiEl ? tekniTipiEl.value : '',
+        loa: parseFloat(document.getElementById('loa_ft').value) || 0,
+        kuyruk: document.getElementById('kuyruk_tipi').value,
+        kdv: parseFloat(document.getElementById('kdv_oran').value) || 20,
+        para: document.getElementById('para_birimi').value.trim() || 'EUR'
+      };
+    }
+
+    function loadProject() {
+      const saved = localStorage.getItem('servis_proje');
+      if (!saved) return;
+      try {
+        const p = JSON.parse(saved);
+        document.getElementById('musteri_adi').value = p.musteri || '';
+        document.getElementById('tekne_adi').value = p.tekne || '';
+        if (p.tip) {
+          const el = document.querySelector(`input[name="tekne_tipi"][value="${p.tip}"]`);
+          if (el) el.checked = true;
+        }
+        if (p.loa) document.getElementById('loa_ft').value = p.loa;
+        if (p.kuyruk) document.getElementById('kuyruk_tipi').value = p.kuyruk;
+        if (p.kdv !== undefined) document.getElementById('kdv_oran').value = p.kdv;
+        if (p.para) document.getElementById('para_birimi').value = p.para;
+        updateQuoteInfo(p);
+      } catch(e) {}
+    }
+
+    function updateQuoteInfo(p) {
+      const para = p.para || 'EUR';
+      document.getElementById('pMusteriAdi').textContent = p.musteri || '—';
+      document.getElementById('pTekneAdi').textContent = p.tekne || '—';
+      document.getElementById('pTekneTipi').textContent = p.tip || '—';
+      document.getElementById('pLoa').textContent = p.loa ? p.loa + ' ft' : '—';
+      document.getElementById('pKuyruk').textContent = p.kuyruk || '—';
+      // KDV etiketlerini güncelle
+      const kdv = p.kdv || 20;
+      document.getElementById('kdvPct').textContent = '%' + kdv;
+      document.getElementById('qKdvPct').textContent = '%' + kdv;
+      calcTotals();
+    }
+
+    /* ───────────────────────────────────────────
+       KATEGORİ TABLARI & HİZMET RENDER
+    ─────────────────────────────────────────── */
+    function buildTabs() {
+      const container = document.getElementById('categoryTabs');
+      container.innerHTML = '';
+      Object.entries(RATE_CARDS).forEach(([key, cat]) => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-pill' + (key === activeCategory ? ' active' : '');
+        btn.textContent = cat.icon + ' ' + cat.title;
+        btn.onclick = () => {
+          activeCategory = key;
+          document.querySelectorAll('.tab-pill').forEach(t => t.classList.remove('active'));
+          btn.classList.add('active');
+          renderCategory(key);
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function renderCategory(catKey) {
+      const section = document.getElementById('serviceSection');
+      const cat = RATE_CARDS[catKey];
+      if (!cat) { section.innerHTML = ''; return; }
+
+      const proje = getProjectData();
+      let html = '<div class="service-grid">';
+
+      // ── kuyruk_items ──
+      if (cat.kuyruk_items) {
+        cat.kuyruk_items.forEach(item => {
+          const dimKeys = Object.keys(item.prices);
+          const defaultDim = proje.kuyruk && item.prices[proje.kuyruk] !== undefined
+            ? proje.kuyruk
+            : dimKeys[0];
+          const defaultPrice = item.prices[defaultDim] || 0;
+          html += buildDimCard(item, dimKeys, defaultDim, defaultPrice, catKey, 'kuyruk');
+        });
+      }
+
+      // ── hp_items ──
+      if (cat.hp_items) {
+        cat.hp_items.forEach(item => {
+          const dimKeys = Object.keys(item.prices);
+          html += buildDimCard(item, dimKeys, dimKeys[0], item.prices[dimKeys[0]], catKey, 'hp');
+        });
+      }
+
+      // ── galon_items ──
+      if (cat.galon_items) {
+        cat.galon_items.forEach(item => {
+          const dimKeys = Object.keys(item.prices);
+          html += buildDimCard(item, dimKeys, dimKeys[0], item.prices[dimKeys[0]], catKey, 'galon');
+        });
+      }
+
+      // ── feet_items ──
+      if (cat.feet_items) {
+        cat.feet_items.forEach(item => {
+          const dimKeys = Object.keys(item.prices);
+          const defaultDim = autoDetectFeetDim(proje.loa, dimKeys) || dimKeys[0];
+          const defaultPrice = item.prices[defaultDim] || 0;
+          html += buildDimCard(item, dimKeys, defaultDim, defaultPrice, catKey, 'feet');
+        });
+      }
+
+      // ── loa_items ──
+      if (cat.loa_items) {
+        cat.loa_items.forEach(item => {
+          const dimKeys = Object.keys(item.prices);
+          const defaultDim = autoDetectLoaDim(proje.loa, dimKeys) || dimKeys[0];
+          const defaultPrice = item.prices[defaultDim] || 0;
+          html += buildDimCard(item, dimKeys, defaultDim, defaultPrice, catKey, 'loa');
+        });
+      }
+
+      // ── power_items ──
+      if (cat.power_items) {
+        cat.power_items.forEach(item => {
+          const dimKeys = Object.keys(item.prices);
+          html += buildDimCard(item, dimKeys, dimKeys[0], item.prices[dimKeys[0]], catKey, 'power');
+        });
+      }
+
+      // ── vinc_items ──
+      if (cat.vinc_items) {
+        cat.vinc_items.forEach(item => {
+          const dimKeys = Object.keys(item.prices);
+          html += buildDimCard(item, dimKeys, dimKeys[0], item.prices[dimKeys[0]], catKey, 'vinc');
+        });
+      }
+
+      // ── volume_items ──
+      if (cat.volume_items) {
+        cat.volume_items.forEach(item => {
+          const dimKeys = Object.keys(item.prices);
+          html += buildDimCard(item, dimKeys, dimKeys[0], item.prices[dimKeys[0]], catKey, 'volume');
+        });
+      }
+
+      // ── fixed_items ──
+      if (cat.fixed_items) {
+        cat.fixed_items.forEach(item => {
+          html += buildFixedCard(item, catKey);
+        });
+      }
+
+      html += '</div>';
+      section.innerHTML = html;
+    }
+
+    /* Boyutlu kart HTML oluşturucu */
+    function buildDimCard(item, dimKeys, defaultDim, defaultPrice, catKey, dimType) {
+      const priceStr = formatPrice(defaultPrice);
+      const safeId = item.id.replace(/[^a-z0-9_]/gi, '_');
+      const selectId = 'sel_' + safeId;
+      const priceId = 'pr_' + safeId;
+
+      let options = dimKeys.map(k =>
+        `<option value="${k}"${k === defaultDim ? ' selected' : ''}>${k}</option>`
+      ).join('');
+
+      return `
+        <div class="service-card">
+          <div class="sc-header">
+            <div class="sc-name">${item.name}</div>
+            <div class="sc-price" id="${priceId}">${priceStr}</div>
+          </div>
+          ${item.desc ? `<div class="sc-desc">${item.desc}</div>` : ''}
+          <select class="sc-select" id="${selectId}"
+            onchange="onDimChange('${item.id}','${catKey}','${dimType}','${selectId}','${priceId}')">
+            ${options}
+          </select>
+          <div class="sc-footer">
+            <button class="btn-add"
+              onclick="addItemFromCard('${item.id}','${catKey}','${dimType}','${selectId}')">
+              + Ekle
+            </button>
+          </div>
+        </div>`;
+    }
+
+    /* Sabit fiyatlı kart HTML oluşturucu */
+    function buildFixedCard(item, catKey) {
+      return `
+        <div class="service-card">
+          <div class="sc-header">
+            <div class="sc-name">${item.name}</div>
+            <div class="sc-price">${formatPrice(item.price)}</div>
+          </div>
+          ${item.desc ? `<div class="sc-desc">${item.desc}</div>` : ''}
+          <div class="sc-footer">
+            <button class="btn-add"
+              onclick="addItem('${catKey}','${item.id}','','${item.price}')">
+              + Ekle
+            </button>
+          </div>
+        </div>`;
+    }
+
+    /* Boyut dropdown değişimi: fiyatı güncelle */
+    function onDimChange(itemId, catKey, dimType, selectId, priceId) {
+      const sel = document.getElementById(selectId);
+      const dim = sel.value;
+      const price = getDimPrice(catKey, itemId, dimType, dim);
+      document.getElementById(priceId).textContent = formatPrice(price);
+    }
+
+    /* Boyutlu kartın "Ekle" butonundan ekleme */
+    function addItemFromCard(itemId, catKey, dimType, selectId) {
+      const sel = document.getElementById(selectId);
+      const dim = sel ? sel.value : '';
+      const price = getDimPrice(catKey, itemId, dimType, dim);
+      addItem(catKey, itemId, dim, price);
+    }
+
+    /* Verilen kategori/id/dimType/dim için fiyat döndür */
+    function getDimPrice(catKey, itemId, dimType, dim) {
+      const cat = RATE_CARDS[catKey];
+      if (!cat) return 0;
+      const listKey = dimType + '_items';
+      const list = cat[listKey];
+      if (!list) return 0;
+      const item = list.find(i => i.id === itemId);
+      if (!item) return 0;
+      return item.prices[dim] || 0;
+    }
+
+    /* LOA'ya göre feet boyut aralığını otomatik seç */
+    function autoDetectFeetDim(loa, dimKeys) {
+      if (!loa) return null;
+      if (loa <= 25) return dimKeys.find(k => k.includes('25'));
+      if (loa <= 30) return dimKeys.find(k => k.includes('30'));
+      if (loa <= 35) return dimKeys.find(k => k.includes('35'));
+      if (loa <= 40) return dimKeys.find(k => k.includes('40'));
+      if (loa <= 45) return dimKeys.find(k => k.includes('45'));
+      if (loa <= 50) return dimKeys.find(k => k.includes('50'));
+      if (loa <= 55) return dimKeys.find(k => k.includes('55'));
+      if (loa <= 60) return dimKeys.find(k => k.includes('60'));
+      if (loa <= 70) return dimKeys.find(k => k.includes('70'));
+      return dimKeys[dimKeys.length - 1];
+    }
+
+    /* LOA'ya göre loa boyut aralığını otomatik seç */
+    function autoDetectLoaDim(loa, dimKeys) {
+      if (!loa) return null;
+      if (loa <= 35) return dimKeys.find(k => k.includes('26-35') || k.includes('35'));
+      if (loa <= 45) return dimKeys.find(k => k.includes('36-45') || k.includes('45'));
+      if (loa <= 55) return dimKeys.find(k => k.includes('46-55') || k.includes('55'));
+      return dimKeys[dimKeys.length - 1];
+    }
+
+    /* ───────────────────────────────────────────
+       İŞ LİSTESİ YÖNETİMİ
+    ─────────────────────────────────────────── */
+
+    /**
+     * Listeye kalem ekle
+     * @param {string} catKey - Kategori anahtarı (motor, boya, ...)
+     * @param {string} itemId - Hizmet ID'si
+     * @param {string} dimension - Boyut string (yada '')
+     * @param {number|string} price - Birim fiyat
+     */
+    function addItem(catKey, itemId, dimension, price) {
+      const cat = RATE_CARDS[catKey];
+      if (!cat) return;
+
+      // Tüm alt listelerden isim/açıklama bul
+      let name = '', desc = '';
+      const allLists = ['kuyruk_items','hp_items','feet_items','galon_items','power_items',
+        'vinc_items','loa_items','volume_items','fixed_items'];
+      for (const lk of allLists) {
+        if (!cat[lk]) continue;
+        const found = cat[lk].find(i => i.id === itemId);
+        if (found) { name = found.name; desc = found.desc || ''; break; }
+      }
+      if (!name) return;
+
+      const unitPrice = parseFloat(price) || 0;
+      const rowId = ++itemCounter;
+
+      workList.push({
+        rowId,
+        catKey,
+        itemId,
+        name,
+        desc,
+        dimension,
+        unitPrice,
+        qty: 1
+      });
+
+      saveWorkList();
+      renderList();
+      showToast('➕ ' + name + ' eklendi');
+    }
+
+    /**
+     * Kalem sil
+     * @param {number} rowId
+     */
+    function removeItem(rowId) {
+      workList = workList.filter(i => i.rowId !== rowId);
+      saveWorkList();
+      renderList();
+    }
+
+    /**
+     * Adet güncelle
+     * @param {number} rowId
+     * @param {number} qty
+     */
+    function updateQty(rowId, qty) {
+      const item = workList.find(i => i.rowId === rowId);
+      if (!item) return;
+      item.qty = Math.max(0, parseFloat(qty) || 0);
+      saveWorkList();
+      calcTotals();
+      renderTotalsOnly();
+    }
+
+    /* İş listesini localStorage'a yaz */
+    function saveWorkList() {
+      localStorage.setItem('servis_list', JSON.stringify(workList));
+    }
+
+    /* İş listesini localStorage'dan yükle */
+    function loadWorkList() {
+      const saved = localStorage.getItem('servis_list');
+      if (!saved) return;
+      try {
+        const arr = JSON.parse(saved);
+        workList = arr;
+        // itemCounter'ı güncelle
+        if (arr.length) {
+          itemCounter = Math.max(...arr.map(i => i.rowId || 0));
+        }
+      } catch(e) {}
+    }
+
+    /* ───────────────────────────────────────────
+       RENDER: İŞ LİSTESİ
+    ─────────────────────────────────────────── */
+    function renderList() {
+      const container = document.getElementById('workListContainer');
+      const totalsBox = document.getElementById('totalsBox');
+
+      if (workList.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <span class="es-icon">🛠️</span>
+            <p>Henüz iş kalemi eklenmedi</p>
+            <small>Yukarıdaki "Hizmet Ekle" bölümünden kalem seçin</small>
+          </div>`;
+        totalsBox.style.display = 'none';
+        return;
+      }
+
+      const proje = getProjectData();
+      const sym = getCurrencySymbol(proje.para);
+
+      let rows = workList.map((item, idx) => {
+        const total = item.unitPrice * item.qty;
+        const detailText = item.dimension
+          ? item.dimension
+          : (item.desc ? item.desc.substring(0, 50) + (item.desc.length > 50 ? '…' : '') : '—');
+        const noteText = item.dimension && item.desc ? item.desc.substring(0, 70) + (item.desc.length > 70 ? '…' : '') : '';
+        return `
+          <tr>
+            <td class="td-num">${idx + 1}</td>
+            <td class="td-name">
+              ${item.name}
+              ${noteText ? `<div class="td-note">${noteText}</div>` : ''}
+            </td>
+            <td class="td-detail">${detailText}</td>
+            <td class="td-price">${sym}${fmtNum(item.unitPrice)}</td>
+            <td class="td-qty">
+              <input type="number" value="${item.qty}" min="0" step="0.5"
+                onchange="updateQty(${item.rowId}, this.value)" />
+            </td>
+            <td class="td-total">${sym}${fmtNum(total)}</td>
+            <td class="td-del">
+              <button onclick="removeItem(${item.rowId})" title="Kaldır">✕</button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Hizmet Adı</th>
+                <th>Detay</th>
+                <th>Birim Fiyat</th>
+                <th>Adet</th>
+                <th>Toplam</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+
+      totalsBox.style.display = 'flex';
+      calcTotals();
+      renderTotalsOnly();
+    }
+
+    /* Sadece toplamları yeniden hesapla ve göster (tüm tabloyu rebuild etmeden) */
+    function renderTotalsOnly() {
+      const proje = getProjectData();
+      const sym = getCurrencySymbol(proje.para);
+      const kdvRate = (proje.kdv || 20) / 100;
+      const subtotal = workList.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+      const kdvAmt = subtotal * kdvRate;
+      const total = subtotal + kdvAmt;
+
+      document.getElementById('sumSubtotal').textContent = sym + fmtNum(subtotal);
+      document.getElementById('sumKdv').textContent = sym + fmtNum(kdvAmt);
+      document.getElementById('sumTotal').textContent = sym + fmtNum(total);
+    }
+
+    /* Tam hesaplama (döner değer) */
+    function calcTotals() {
+      const proje = getProjectData();
+      const kdvRate = (proje.kdv || 20) / 100;
+      const subtotal = workList.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+      const kdvAmt = subtotal * kdvRate;
+      const total = subtotal + kdvAmt;
+      return { subtotal, kdvAmt, total, kdvRate, para: proje.para };
+    }
+
+    /* ───────────────────────────────────────────
+       TEKLİF ÖZETİ RENDER
+    ─────────────────────────────────────────── */
+    function renderQuoteSummary() {
+      const proje = getProjectData();
+      const sym = getCurrencySymbol(proje.para);
+      const { subtotal, kdvAmt, total } = calcTotals();
+
+      // Teklif no ve tarih
+      document.getElementById('quoteNo').textContent = generateQuoteNo();
+      document.getElementById('quoteDate').textContent = formatDate(new Date());
+
+      // Müşteri bilgileri
+      updateQuoteInfo(proje);
+
+      const tableEl = document.getElementById('quoteSummaryTable');
+      const totalsBox = document.getElementById('quoteTotalsBox');
+
+      if (workList.length === 0) {
+        tableEl.innerHTML = '<p style="color:var(--muted);font-size:13px;padding:16px 0;">İş listesi boş.</p>';
+        totalsBox.style.display = 'none';
+        return;
+      }
+
+      let rows = workList.map((item, idx) => {
+        const total = item.unitPrice * item.qty;
+        return `
+          <tr>
+            <td class="td-num">${idx + 1}</td>
+            <td class="td-name">${item.name}</td>
+            <td class="td-detail">${item.dimension || '—'}</td>
+            <td class="td-price">${sym}${fmtNum(item.unitPrice)}</td>
+            <td class="td-qty"><input type="number" value="${item.qty}" readonly /></td>
+            <td class="td-total">${sym}${fmtNum(total)}</td>
+          </tr>`;
+      }).join('');
+
+      tableEl.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Hizmet Adı</th><th>Detay</th>
+                <th>Birim Fiyat</th><th>Adet</th><th>Toplam</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+
+      document.getElementById('qSumSubtotal').textContent = sym + fmtNum(subtotal);
+      document.getElementById('qSumKdv').textContent = sym + fmtNum(kdvAmt);
+      document.getElementById('qSumTotal').textContent = sym + fmtNum(total);
+      totalsBox.style.display = 'flex';
+
+      showToast('📄 Teklif özeti güncellendi');
+    }
+
+    /* Yazdır */
+    function printQuote() {
+      renderQuoteSummary();
+      setTimeout(() => window.print(), 300);
+    }
+
+    /* ───────────────────────────────────────────
+       YARDIMCI FONKSİYONLAR
+    ─────────────────────────────────────────── */
+
+    /* Fiyat badge formatı */
+    function formatPrice(price) {
+      if (price === 0 || price === undefined) return '—';
+      const proje = getProjectData();
+      const sym = getCurrencySymbol(proje.para);
+      return sym + fmtNum(price);
+    }
+
+    /* Para birimi sembolü */
+    function getCurrencySymbol(code) {
+      const map = { 'EUR': '€', 'USD': '$', 'GBP': '£', 'TRY': '₺' };
+      return map[(code || '').toUpperCase()] || (code || '€') + ' ';
+    }
+
+    /* Sayı formatı */
+    function fmtNum(n) {
+      return Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    /* Teklif numarası üret */
+    function generateQuoteNo() {
+      const d = new Date();
+      return 'AGM-' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + '-' +
+        String(Math.floor(Math.random()*900)+100);
+    }
+
+    /* Tarih formatı */
+    function formatDate(d) {
+      return d.toLocaleDateString('tr-TR', { day:'2-digit', month:'long', year:'numeric' });
+    }
+
+    /* Toast bildirimi göster */
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    /* ───────────────────────────────────────────
+       UYGULAMA BAŞLATMA
+    ─────────────────────────────────────────── */
+    (function init() {
+      // Tema yükle
+      const savedTheme = localStorage.getItem('marine_theme') || 'light';
+      applyTheme(savedTheme);
+
+      // Proje bilgilerini yükle
+      loadProject();
+
+      // İş listesini yükle
+      loadWorkList();
+
+      // Kategori tablarını oluştur
+      buildTabs();
+
+      // İlk kategoriyi render et
+      renderCategory(activeCategory);
+
+      // İş listesini render et
+      renderList();
+
+      // Teklif özetini başlat
+      renderQuoteSummary();
+
+      // KDV değişimini dinle (canlı güncelleme)
+      document.getElementById('kdv_oran').addEventListener('input', () => {
+        calcTotals();
+        renderTotalsOnly();
+      });
+    })();
+  </script>
+</body>
+</html>
