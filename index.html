@@ -21,16 +21,98 @@
       --border:  #cfd8e3;
       --radius:  12px;
       --shadow:  0 4px 20px rgba(10,22,40,.12);
+      --bg-body-1: #0a1628;
+      --bg-body-2: #0d3b6e;
+      --bg-body-3: #113d70;
+    }
+
+    /* ── Gece modu değişkenleri ── */
+    [data-theme="dark"] {
+      --navy:    #060d1a;
+      --ocean:   #0a2340;
+      --sea:     #0f3d6e;
+      --wave:    #1976d2;
+      --foam:    #0d1f35;
+      --accent:  #00bcd4;
+      --gold:    #f0a500;
+      --danger:  #e53935;
+      --text:    #cfd8e3;
+      --muted:   #78909c;
+      --card:    #0e1e33;
+      --border:  #1e3a5a;
+      --shadow:  0 4px 20px rgba(0,0,0,.4);
+      --bg-body-1: #050c18;
+      --bg-body-2: #070f1e;
+      --bg-body-3: #080f1d;
+    }
+
+    /* ── Gündüz modu değişkenleri ── */
+    [data-theme="light"] {
+      --navy:    #0a1628;
+      --ocean:   #0d3b6e;
+      --sea:     #1565a7;
+      --wave:    #2196f3;
+      --foam:    #e8f4fd;
+      --accent:  #00bcd4;
+      --gold:    #f0a500;
+      --danger:  #e53935;
+      --text:    #1a2740;
+      --muted:   #607d8b;
+      --card:    #ffffff;
+      --border:  #cfd8e3;
+      --shadow:  0 4px 20px rgba(10,22,40,.12);
+      --bg-body-1: #0a1628;
+      --bg-body-2: #0d3b6e;
+      --bg-body-3: #113d70;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(160deg, var(--navy) 0%, var(--ocean) 60%, #113d70 100%);
+      background: linear-gradient(160deg, var(--bg-body-1) 0%, var(--bg-body-2) 60%, var(--bg-body-3) 100%);
       min-height: 100vh;
       color: var(--text);
       padding: 24px 16px 60px;
+      transition: background .3s, color .3s;
+    }
+
+    /* ── Tema toggle butonu ── */
+    .theme-toggle {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 999;
+      background: rgba(255,255,255,.12);
+      border: 1.5px solid rgba(255,255,255,.25);
+      border-radius: 50px;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      backdrop-filter: blur(8px);
+      transition: background .2s, border-color .2s;
+      user-select: none;
+    }
+    .theme-toggle:hover {
+      background: rgba(255,255,255,.22);
+      border-color: rgba(255,255,255,.4);
+    }
+    .theme-toggle .toggle-icon { font-size: 16px; line-height: 1; }
+    .theme-toggle .toggle-label { font-size: 12px; }
+
+    [data-theme="dark"] .theme-toggle {
+      background: rgba(0,0,0,.35);
+      border-color: rgba(0,188,212,.35);
+      color: var(--accent);
+    }
+    [data-theme="dark"] .theme-toggle:hover {
+      background: rgba(0,0,0,.5);
+      border-color: rgba(0,188,212,.6);
     }
 
     /* ── Üst başlık ── */
@@ -1464,9 +1546,77 @@
     .mat-total-box.visible { display: flex; justify-content: space-between; align-items: center; }
     .mat-total-box .mt-label { font-size: 14px; font-weight: 600; }
     .mat-total-box .mt-amount { font-size: 22px; font-weight: 800; color: var(--gold); }
+
+    /* ══ DARK MODE OVERRIDES ══ */
+    [data-theme="dark"] .card { background: var(--card); border: 1px solid var(--border); }
+    [data-theme="dark"] .boat-btn { background: #0d1f35; border-color: var(--border); }
+    [data-theme="dark"] .boat-btn:hover { background: #122840; border-color: var(--wave); }
+    [data-theme="dark"] .boat-btn.active { background: linear-gradient(135deg, #0d2a45, #0a1f35); border-color: var(--wave); }
+    [data-theme="dark"] .boat-btn .boat-label { color: var(--text); }
+    [data-theme="dark"] .input-wrap { background: #0b1a2e; border-color: var(--border); }
+    [data-theme="dark"] .input-wrap input,
+    [data-theme="dark"] .input-wrap select { color: var(--text); background: transparent; }
+    [data-theme="dark"] .input-unit { background: #091624; color: var(--muted); border-left-color: var(--border); }
+    [data-theme="dark"] .unit-toggle button { background: #0b1a2e; color: var(--muted); }
+    [data-theme="dark"] .unit-toggle button.active { background: var(--ocean); color: #fff; }
+    [data-theme="dark"] .card-title { border-bottom-color: var(--border); }
+    [data-theme="dark"] .card-title .icon { background: #0d2440; color: var(--accent); }
+    [data-theme="dark"] .result-row { background: #091624; }
+    [data-theme="dark"] .result-row .r-label { color: var(--muted); }
+    [data-theme="dark"] .waterline-box { background: #091624; border-color: var(--border); }
+    [data-theme="dark"] .waterline-toggle { color: var(--accent); }
+    [data-theme="dark"] .scope-card { background: #0b1a2e; border-color: var(--border); }
+    [data-theme="dark"] .scope-card:hover { background: #0e2040; border-color: var(--wave); }
+    [data-theme="dark"] .scope-card.active { background: linear-gradient(135deg, #0a2a45, #061828); border-color: var(--wave); }
+    [data-theme="dark"] .scope-detail { background: #091624; border-color: var(--border); color: var(--muted); }
+    [data-theme="dark"] .scope-tasks li { color: var(--text); }
+    [data-theme="dark"] .labor-section { background: #091624; border-color: var(--border); }
+    [data-theme="dark"] .labor-total-box { background: #061018; }
+    [data-theme="dark"] .labor-ref-body { background: #091624; border-color: var(--border); }
+    [data-theme="dark"] .labor-ref-toggle { background: #0b1a2e; border-color: var(--border); color: var(--text); }
+    [data-theme="dark"] .labor-ref-toggle:hover { background: #0e2040; }
+    [data-theme="dark"] .summary-section { background: #091624; border-color: var(--border); }
+    [data-theme="dark"] .summary-row { border-bottom-color: var(--border); }
+    [data-theme="dark"] .summary-row .sr-label { color: var(--muted); }
+    [data-theme="dark"] .summary-grand { background: #061018; border-color: var(--border); }
+    [data-theme="dark"] .info-btn { background: rgba(0,188,212,.1); border-color: rgba(0,188,212,.3); }
+    [data-theme="dark"] .info-panel { background: var(--card); border: 1px solid var(--border); }
+    [data-theme="dark"] .info-section { border-bottom-color: var(--border); }
+    [data-theme="dark"] .info-section h3 { color: var(--accent); }
+    [data-theme="dark"] .formula-box { background: #061018; border-left-color: var(--wave); color: var(--text); }
+    [data-theme="dark"] .admin-panel { background: var(--card); }
+    [data-theme="dark"] .admin-tab { background: #091624; color: var(--muted); border-color: var(--border); }
+    [data-theme="dark"] .admin-tab.active { background: var(--ocean); color: #fff; }
+    [data-theme="dark"] .admin-input { background: #0b1a2e; border-color: var(--border); color: var(--text); }
+    [data-theme="dark"] .admin-input:focus { border-color: var(--wave); }
+    [data-theme="dark"] .admin-boat-row { border-bottom-color: var(--border); }
+    [data-theme="dark"] .admin-boat-row:hover { background: #091624; }
+    [data-theme="dark"] .pricing-matrix-table th { background: #091624; color: var(--muted); }
+    [data-theme="dark"] .pricing-matrix-table td { border-color: var(--border); }
+    [data-theme="dark"] .pricing-matrix-table tr:nth-child(even) { background: #091624; }
+    [data-theme="dark"] .step-line { background: var(--border); }
+    [data-theme="dark"] .step-num { background: #0b1a2e; border-color: var(--border); color: var(--muted); }
+    [data-theme="dark"] .step-item.active .step-num { background: var(--wave); border-color: var(--wave); color: #fff; }
+    [data-theme="dark"] .step-item.done .step-num { background: #1a5c2a; border-color: #1a5c2a; color: #fff; }
+    [data-theme="dark"] .nav-btn-back { background: #0b1a2e; border-color: var(--border); color: var(--text); }
+    [data-theme="dark"] .nav-btn-back:hover { background: #0e2040; }
+    [data-theme="dark"] select option { background: #0e1e33; color: var(--text); }
+    [data-theme="dark"] .divider { background: var(--border); }
+
+    /* Transition smooth geçiş */
+    .card, .boat-btn, .input-wrap, .scope-card, .labor-section,
+    .summary-section, .admin-panel, .step-num, .step-line,
+    .info-panel, .nav-btn-back { transition: background .3s, border-color .3s, color .3s; }
   </style>
 </head>
 <body>
+
+<!-- Tema Toggle -->
+<button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Gece/Gündüz modu">
+  <span class="toggle-icon" id="toggle-icon">🌙</span>
+  <span class="toggle-label" id="toggle-label">Gece</span>
+</button>
+
 <div class="container">
 
   <!-- Başlık -->
@@ -2348,6 +2498,30 @@
 </div><!-- /admin-overlay -->
 
 <script>
+  // ── Tema Yönetimi ──
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('marine_theme', theme);
+    const icon  = document.getElementById('toggle-icon');
+    const label = document.getElementById('toggle-label');
+    if (theme === 'dark') {
+      icon.textContent  = '☀️';
+      label.textContent = 'Gündüz';
+    } else {
+      icon.textContent  = '🌙';
+      label.textContent = 'Gece';
+    }
+  }
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  }
+  // Sayfa yüklenince kaydedilmiş temayı uygula
+  (function() {
+    const saved = localStorage.getItem('marine_theme') || 'light';
+    applyTheme(saved);
+  })();
+
   // ── Tekne Veritabanı ──
   const BOAT_DB = [
     // ═══ MOTOR YATLAR ═══
