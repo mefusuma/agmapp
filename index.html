@@ -1547,6 +1547,38 @@
     .mat-total-box .mt-label { font-size: 14px; font-weight: 600; }
     .mat-total-box .mt-amount { font-size: 22px; font-weight: 800; color: var(--gold); }
 
+    /* ── Sarf bölümü class-based stiller ── */
+    .sarf-mat-group { border-color: #e8b400 !important; }
+    .sarf-mat-header { background: #fffbea !important; border-bottom-color: #e8b400 !important; }
+    .sarf-role-tag { background: #f0a50018; color: #b37a00; border: 1px solid #e8b40040; }
+    .sarf-range-label { margin-left: auto; font-size: 11px; color: var(--muted); }
+    .sarf-body { padding: 12px 16px; }
+    .sarf-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .sarf-item-tag { font-size: 11px; background: #f9f4e8; border: 1px solid #e8b40030; border-radius: 6px; padding: 3px 8px; color: #7a6000; }
+    .sarf-price-row { display: flex; justify-content: space-between; align-items: center; background: #fff8e0; border: 1px solid #e8b40050; border-radius: 8px; padding: 10px 14px; }
+    .sarf-price-note { font-size: 12px; color: var(--muted); }
+    .sarf-price-val { font-size: 18px; font-weight: 800; color: #b37a00; }
+
+    /* Summary pricing section */
+    [data-theme="dark"] #summary-pricing { background: linear-gradient(135deg, #0a2a10, #0e3a18) !important; border-color: #1e5c28 !important; }
+    [data-theme="dark"] #summary-pricing h3 { color: #81c784 !important; }
+    [data-theme="dark"] #summary-pricing .sr-label { color: rgba(255,255,255,.7) !important; }
+    [data-theme="dark"] #summary-pricing .sr-val { color: #e0f2e0 !important; }
+    [data-theme="dark"] #summary-pricing .summary-row[style] { border-top-color: #2e7d32 !important; }
+    [data-theme="dark"] #summary-pricing .summary-row span[style] { color: #a5d6a7 !important; }
+    /* badge-builtin */
+    [data-theme="dark"] .badge-builtin { background: #0d2a12 !important; color: #81c784 !important; }
+
+    /* Dark mode sarf overrides */
+    [data-theme="dark"] .sarf-mat-group { border-color: #2a4a00 !important; }
+    [data-theme="dark"] .sarf-mat-header { background: #0e1a08 !important; border-bottom-color: #2a4a00 !important; }
+    [data-theme="dark"] .sarf-role-tag { background: rgba(0,188,212,0.12) !important; color: var(--accent) !important; border-color: rgba(0,188,212,0.3) !important; }
+    [data-theme="dark"] .sarf-range-label { color: var(--muted) !important; }
+    [data-theme="dark"] .sarf-item-tag { background: #0b1a2e !important; border-color: var(--border) !important; color: var(--text) !important; }
+    [data-theme="dark"] .sarf-price-row { background: #091624 !important; border-color: var(--border) !important; }
+    [data-theme="dark"] .sarf-price-note { color: var(--muted) !important; }
+    [data-theme="dark"] .sarf-price-val { color: var(--gold) !important; }
+
     /* ══ DARK MODE OVERRIDES ══ */
     [data-theme="dark"] .card { background: var(--card); border: 1px solid var(--border); }
     [data-theme="dark"] .boat-btn { background: #0d1f35; border-color: var(--border); }
@@ -1603,10 +1635,93 @@
     [data-theme="dark"] select option { background: #0e1e33; color: var(--text); }
     [data-theme="dark"] .divider { background: var(--border); }
 
+    /* ── Ek dark mode fixes ── */
+    /* Card title */
+    [data-theme="dark"] .card-title { color: var(--accent) !important; }
+    [data-theme="dark"] .card-title .icon { background: #0a2035 !important; }
+
+    /* Seçili tekne etiketi */
+    [data-theme="dark"] .selected-boat-tag { background: #0a2035; border-color: var(--border); }
+    [data-theme="dark"] .sbt-info, [data-theme="dark"] .sbt-name { color: var(--text); }
+    [data-theme="dark"] .sbt-type { color: var(--muted); }
+
+    /* Scope badge'leri */
+    [data-theme="dark"] .scope-badge { border: 1px solid var(--border) !important; }
+    [data-theme="dark"] .scope-badge-light  { background: #162a17 !important; color: #81c784 !important; }
+    [data-theme="dark"] .scope-badge-medium { background: #2e1f05 !important; color: #ffb74d !important; }
+    [data-theme="dark"] .scope-badge-heavy  { background: #2a0d14 !important; color: #ef9a9a !important; }
+    [data-theme="dark"] .scope-badge-full   { background: #1e1435 !important; color: #ce93d8 !important; }
+
+    /* Tekne btn */
+    [data-theme="dark"] .boat-btn { color: var(--text); }
+
+    /* Toggle track (switch) */
+    [data-theme="dark"] .toggle-track { background: #1e3a5a !important; }
+    [data-theme="dark"] input:checked + .toggle-track { background: var(--wave) !important; }
+
+    /* Picker select */
+    [data-theme="dark"] .picker-select { background: #0b1a2e; color: var(--text); border-color: var(--border); }
+
+    /* Malzeme kartları */
+    [data-theme="dark"] .mat-group { background: #0b1a2e !important; border-color: var(--border) !important; }
+    [data-theme="dark"] .mat-group-header { background: #091624 !important; border-bottom-color: var(--border) !important; color: var(--text) !important; }
+    [data-theme="dark"] .mat-group-header .mat-category { color: var(--accent) !important; }
+    [data-theme="dark"] .mat-group-header .mat-range-tag { background: #0a2035 !important; color: var(--muted) !important; }
+    /* mat-role-tag inline style override */
+    [data-theme="dark"] .mat-role-tag { background: rgba(0,188,212,0.12) !important; color: var(--accent) !important; border-color: rgba(0,188,212,0.3) !important; }
+    [data-theme="dark"] .mat-option { background: #091624 !important; border-color: var(--border) !important; }
+    [data-theme="dark"] .mat-option:hover { background: #0e2040 !important; }
+    [data-theme="dark"] .mat-option.selected { background: #0a2a45 !important; border-color: var(--wave) !important; }
+    [data-theme="dark"] .mat-option-product { color: var(--text); }
+    [data-theme="dark"] .mat-option-brand { color: var(--accent); }
+    [data-theme="dark"] .mat-option-desc { color: var(--muted); }
+    [data-theme="dark"] .mat-option-calc { background: #06111e !important; border-top-color: var(--border) !important; }
+    [data-theme="dark"] .mat-option-calc label { color: var(--muted) !important; }
+    [data-theme="dark"] .mat-option-calc .mat-coats-inp { background: #0b1a2e !important; color: var(--text) !important; border-color: var(--border) !important; }
+    [data-theme="dark"] .mat-option-calc .mat-amounts { color: var(--text); }
+    [data-theme="dark"] .mat-option-calc .mat-price { color: var(--gold); }
+    [data-theme="dark"] .mat-total-box { background: linear-gradient(135deg, #061828, #091e30); }
+    [data-theme="dark"] .sarf-section { background: #07121e !important; border-color: var(--border) !important; }
+    [data-theme="dark"] .sarf-section .sarf-header { background: #091624 !important; color: var(--text) !important; }
+    [data-theme="dark"] .sarf-section .sarf-header .sarf-title { color: var(--gold) !important; }
+    [data-theme="dark"] .sarf-tag { background: #0b1a2e !important; color: var(--text) !important; border-color: var(--border) !important; }
+    [data-theme="dark"] .sarf-total-row { border-top-color: var(--border) !important; color: var(--muted) !important; }
+    [data-theme="dark"] .sarf-total-row .sarf-total-price { color: var(--gold) !important; }
+    /* Sarf inline-style override */
+    [data-theme="dark"] .mat-group-header span[style] { background: rgba(0,188,212,0.1) !important; color: var(--accent) !important; border-color: rgba(0,188,212,0.25) !important; }
+
+    /* Admin panel */
+    [data-theme="dark"] .admin-overlay { background: rgba(0,0,0,.75) !important; }
+    [data-theme="dark"] .admin-panel { background: #0e1e33 !important; border: 1px solid var(--border) !important; }
+    [data-theme="dark"] .admin-header { background: #091624 !important; border-bottom-color: var(--border) !important; color: var(--text) !important; }
+    [data-theme="dark"] .admin-tabs { background: #091624 !important; border-bottom-color: var(--border) !important; }
+    [data-theme="dark"] .admin-tab { background: transparent !important; color: var(--muted) !important; border-color: transparent !important; }
+    [data-theme="dark"] .admin-tab.active { background: #0e1e33 !important; color: var(--accent) !important; border-bottom-color: #0e1e33 !important; }
+    [data-theme="dark"] .admin-section-title { color: var(--accent) !important; border-bottom-color: var(--border) !important; }
+    [data-theme="dark"] .admin-btn { background: #0b1a2e !important; border-color: var(--border) !important; color: var(--text) !important; }
+    [data-theme="dark"] .admin-btn:hover { background: #0e2040 !important; }
+    [data-theme="dark"] .admin-btn.danger { background: #2a0a0a !important; border-color: #5a1a1a !important; color: #ff6b6b !important; }
+    [data-theme="dark"] .coef-card { background: #091624 !important; border-color: var(--border) !important; }
+    [data-theme="dark"] .coef-title { color: var(--accent) !important; }
+    [data-theme="dark"] .coef-formula { background: #061018 !important; color: var(--muted) !important; border-color: var(--border) !important; }
+    [data-theme="dark"] .pwd-box { background: #0b1a2e !important; border-color: var(--border) !important; }
+    [data-theme="dark"] .pwd-box input { background: #091624 !important; color: var(--text) !important; border-color: var(--border) !important; }
+    [data-theme="dark"] .admin-boat-table th { background: #091624 !important; color: var(--muted) !important; }
+    [data-theme="dark"] .admin-boat-table td { border-bottom-color: var(--border) !important; color: var(--text) !important; }
+    [data-theme="dark"] .admin-boat-table tr:hover td { background: #091624 !important; }
+    /* Input ve Select genel dark override */
+    [data-theme="dark"] input:not([type="radio"]):not([type="checkbox"]):not([type="range"]) { background: #0b1a2e !important; color: var(--text) !important; border-color: var(--border) !important; }
+    [data-theme="dark"] select { background: #0b1a2e !important; color: var(--text) !important; border-color: var(--border) !important; }
+    [data-theme="dark"] table th { background: #091624 !important; color: var(--muted) !important; }
+
     /* Transition smooth geçiş */
     .card, .boat-btn, .input-wrap, .scope-card, .labor-section,
     .summary-section, .admin-panel, .step-num, .step-line,
-    .info-panel, .nav-btn-back { transition: background .3s, border-color .3s, color .3s; }
+    .info-panel, .nav-btn-back, .mat-group, .mat-option,
+    .mat-group-header, .card-title, .selected-boat-tag,
+    .sarf-section, .sarf-tag, .admin-tabs, .admin-tab,
+    .coef-card, .coef-formula, .pwd-box
+    { transition: background .3s, border-color .3s, color .3s; }
   </style>
 </head>
 <body>
@@ -4183,19 +4298,19 @@
     if (sarfResult) {
       grandTotal += sarfResult.cost;
       container.innerHTML += `
-        <div class="mat-group" style="border-color:#e8b400;">
-          <div class="mat-group-header" style="background:#fffbea;border-bottom-color:#e8b400;">
-            <span class="mat-role-tag" style="background:#f0a50018;color:#b37a00;border:1px solid #e8b40040;">🧰 Sarf Malzeme</span>
+        <div class="mat-group sarf-mat-group">
+          <div class="mat-group-header sarf-mat-header">
+            <span class="mat-role-tag sarf-role-tag">🧰 Sarf Malzeme</span>
             <span class="mat-group-title">Sarf &amp; Koruyucu Malzeme Tahmini</span>
-            <span style="margin-left:auto;font-size:11px;color:var(--muted);">${sarfResult.range} ft aralığı</span>
+            <span class="sarf-range-label">${sarfResult.range} ft aralığı</span>
           </div>
-          <div style="padding:12px 16px;">
-            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
-              ${SARF_ITEMS.map(s => `<span style="font-size:11px;background:#f9f4e8;border:1px solid #e8b40030;border-radius:6px;padding:3px 8px;color:#7a6000;">${s.icon} ${s.label}</span>`).join('')}
+          <div class="sarf-body">
+            <div class="sarf-tags-wrap">
+              ${SARF_ITEMS.map(s => `<span class="sarf-item-tag">${s.icon} ${s.label}</span>`).join('')}
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;background:#fff8e0;border:1px solid #e8b40050;border-radius:8px;padding:10px 14px;">
-              <div style="font-size:12px;color:var(--muted);">Matris tahmini • Admin panelden düzenlenebilir</div>
-              <div style="font-size:18px;font-weight:800;color:#b37a00;">${currency}${sarfResult.cost.toLocaleString('tr-TR')}</div>
+            <div class="sarf-price-row">
+              <div class="sarf-price-note">Matris tahmini • Admin panelden düzenlenebilir</div>
+              <div class="sarf-price-val">${currency}${sarfResult.cost.toLocaleString('tr-TR')}</div>
             </div>
           </div>
         </div>`;
