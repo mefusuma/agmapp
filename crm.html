@@ -474,6 +474,9 @@
       border: 1px solid var(--border);
       width: 100%;
       max-width: 680px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
       transform: translateY(20px) scale(.98);
       transition: transform .25s;
       margin: auto;
@@ -499,7 +502,7 @@
       transition: color .2s;
     }
     .modal-close:hover { color: var(--danger); }
-    .modal-body { padding: 20px 22px; }
+    .modal-body { padding: 20px 22px; overflow-y: auto; flex: 1; min-height: 0; }
     .modal-footer {
       display: flex;
       justify-content: flex-end;
@@ -742,19 +745,29 @@
       <div class="stat-label">Toplam Müşteri</div>
     </div>
     <div class="stat-card">
+      <div class="stat-icon">⛵</div>
+      <div class="stat-value" id="statTotalBoats">0</div>
+      <div class="stat-label">Kayıtlı Tekne</div>
+    </div>
+    <div class="stat-card">
       <div class="stat-icon">📋</div>
       <div class="stat-value" id="statOpenRequests">0</div>
       <div class="stat-label">Açık Talepler</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">📅</div>
-      <div class="stat-value" id="statThisMonth">0</div>
-      <div class="stat-label">Bu Ay Eklenen</div>
     </div>
     <div class="stat-card p1-accent">
       <div class="stat-icon">🔥</div>
       <div class="stat-value" id="statCritical">0</div>
       <div class="stat-label">P1/P2 Bekleyen</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💰</div>
+      <div class="stat-value" id="statRevenue">€0</div>
+      <div class="stat-label">Onaylanan Bütçe</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" id="statSezonIcon">☀️</div>
+      <div class="stat-value" id="statSezon">—</div>
+      <div class="stat-label">Sezon Durumu</div>
     </div>
   </div>
 
@@ -873,10 +886,13 @@
           <label>Kaynak</label>
           <select id="fKaynak">
             <option value="referans">🤝 Referans</option>
-            <option value="web">🌐 Web</option>
-            <option value="marina">⚓ Marina</option>
-            <option value="fuar">🏛️ Fuar</option>
+            <option value="marina">⚓ Marina Yönlendirmesi</option>
+            <option value="kaptan">🧑‍✈️ Kaptan / Mürettebat</option>
+            <option value="acenta">🏢 Acenta</option>
+            <option value="web">🌐 Web / Google</option>
             <option value="sosyal_medya">📱 Sosyal Medya</option>
+            <option value="fuar">🏛️ Fuar / Boat Show</option>
+            <option value="tekrar">🔄 Tekrar Müşteri</option>
             <option value="diger">📦 Diğer</option>
           </select>
         </div>
@@ -888,9 +904,27 @@
 
       <!-- Tab 2: Tekne -->
       <div class="tab-panel" id="tab-tekne">
-        <div class="form-group">
-          <label>Tekne Adı</label>
-          <input type="text" id="fTekneAdi" placeholder="Deniz Yıldızı">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tekne Adı</label>
+            <input type="text" id="fTekneAdi" placeholder="Deniz Yıldızı">
+          </div>
+          <div class="form-group">
+            <label>Marina / Bağlama Yeri</label>
+            <select id="fMarina">
+              <option value="">— Seçiniz —</option>
+              <option value="setur_antalya">Setur Antalya Marina</option>
+              <option value="kaleici">Kaleiçi Yat Limanı</option>
+              <option value="kemer">Kemer Marina</option>
+              <option value="celebi">Çelebi Marina</option>
+              <option value="marinturk">MarinTurk</option>
+              <option value="finike">Finike Marina</option>
+              <option value="kas">Kaş Marina</option>
+              <option value="port_akdeniz">Port Akdeniz</option>
+              <option value="alanya">Alanya Marina</option>
+              <option value="diger_marina">Diğer</option>
+            </select>
+          </div>
         </div>
         <div class="form-group">
           <label>Tekne Tipi</label>
@@ -933,9 +967,36 @@
             <input type="number" id="fTekneYili" placeholder="2020" min="1900" max="2099">
           </div>
         </div>
-        <div class="form-group">
-          <label>Bayrak <span class="optional-label">(opsiyonel)</span></label>
-          <input type="text" id="fBayrak" placeholder="Türkiye">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Motor Tipi</label>
+            <select id="fMotorTipi">
+              <option value="">— Seçiniz —</option>
+              <option value="inboard_dizel">İçten Takma Dizel</option>
+              <option value="inboard_benzin">İçten Takma Benzin</option>
+              <option value="outboard">Dıştan Takma</option>
+              <option value="sail_drive">Sail Drive</option>
+              <option value="shaft_drive">Shaft Drive</option>
+              <option value="jet_drive">Jet Drive</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Motor Marka & HP</label>
+            <div style="display:flex;gap:6px;">
+              <input type="text" id="fMotorMarka" placeholder="Volvo Penta" style="flex:2;">
+              <input type="number" id="fMotorHP" placeholder="HP" min="0" style="flex:1;">
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Bayrak</label>
+            <input type="text" id="fBayrak" placeholder="Türkiye">
+          </div>
+          <div class="form-group">
+            <label>Son Bakım Tarihi</label>
+            <input type="date" id="fSonBakim">
+          </div>
         </div>
       </div>
 
@@ -995,11 +1056,28 @@
         <div class="form-group">
           <label>Talep Türü</label>
           <select id="fTalepTur" onchange="updatePriorityPreview()">
-            <option value="bakim">🔧 Bakım</option>
-            <option value="onarim">🛠️ Onarım</option>
-            <option value="boya">🎨 Boya</option>
-            <option value="teknik_rapor">📊 Teknik Rapor</option>
-            <option value="diger">📦 Diğer</option>
+            <optgroup label="Bakım & Boya">
+              <option value="su_alti_bakim">🚢 Su Altı Bakım</option>
+              <option value="antifouling">🎨 Antifouling / Zehirli Boya</option>
+              <option value="boya_genel">🖌️ Gövde Boya & Cila</option>
+              <option value="periyodik_bakim">🔧 Periyodik Bakım</option>
+            </optgroup>
+            <optgroup label="Motor & Mekanik">
+              <option value="motor_bakim">⚙️ Motor Bakım / Onarım</option>
+              <option value="mekanik_torna">🔩 Mekanik & Torna</option>
+              <option value="saft_pervane">🌀 Şaft & Pervane</option>
+            </optgroup>
+            <optgroup label="Elektrik & Donanım">
+              <option value="elektrik">⚡ Elektrik & Aydınlatma</option>
+              <option value="elektronik">📡 Elektronik / Navigasyon</option>
+            </optgroup>
+            <optgroup label="Diğer Servisler">
+              <option value="yelken_doseme">🧵 Yelken & Döşeme</option>
+              <option value="tesisat">🚿 Tesisat (Su/Yakıt)</option>
+              <option value="cekek">🏗️ Çekek & Denize İndirme</option>
+              <option value="teknik_rapor">📊 Teknik Rapor / Survey</option>
+              <option value="diger">📦 Diğer</option>
+            </optgroup>
           </select>
         </div>
         <div class="form-group">
@@ -1102,18 +1180,18 @@ function calcPriorityScore(talep, musteri) {
   let score = 0;
   const breakdown = [];
 
-  // Budget
+  // Budget (max +3)
   if (!talep.butceBilinmiyor && talep.butce > 0) {
     const b = Number(talep.butce);
-    if (b > 5000)      { score += 3; breakdown.push({ label: 'Bütçe >5000€', pts: 3 }); }
-    else if (b >= 2000){ score += 2; breakdown.push({ label: 'Bütçe 2000-5000€', pts: 2 }); }
-    else if (b >= 500) { score += 1; breakdown.push({ label: 'Bütçe 500-2000€', pts: 1 }); }
+    if (b > 5000)      { score += 3; breakdown.push({ label: 'Bütçe >5.000€', pts: 3 }); }
+    else if (b >= 2000){ score += 2; breakdown.push({ label: 'Bütçe 2-5K€', pts: 2 }); }
+    else if (b >= 500) { score += 1; breakdown.push({ label: 'Bütçe 500-2K€', pts: 1 }); }
     else               { breakdown.push({ label: 'Bütçe <500€', pts: 0 }); }
   } else if (talep.butceBilinmiyor) {
     breakdown.push({ label: 'Bütçe bilinmiyor', pts: 0 });
   }
 
-  // Date
+  // Date urgency (max +3)
   if (talep.istenenTarih) {
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -1125,22 +1203,49 @@ function calcPriorityScore(talep, musteri) {
     else                { breakdown.push({ label: 'Tarih >30 gün', pts: 0 }); }
   }
 
-  // Type
+  // Job type (max +2)
   const tur = talep.tur || '';
-  if (tur === 'onarim')  { score += 2; breakdown.push({ label: 'Tür: Onarım', pts: 2 }); }
-  else if (tur === 'bakim' || tur === 'boya') { score += 1; breakdown.push({ label: 'Tür: ' + tur, pts: 1 }); }
-  else { breakdown.push({ label: 'Tür: ' + tur, pts: 0 }); }
+  const acilTurler = ['motor_bakim','saft_pervane','elektrik','elektronik'];
+  const ortaTurler = ['su_alti_bakim','antifouling','boya_genel','periyodik_bakim','mekanik_torna','tesisat'];
+  if (acilTurler.includes(tur)) {
+    score += 2; breakdown.push({ label: 'Tür: ' + (TUR_LABEL[tur] || tur) + ' (acil iş)', pts: 2 });
+  } else if (ortaTurler.includes(tur)) {
+    score += 1; breakdown.push({ label: 'Tür: ' + (TUR_LABEL[tur] || tur), pts: 1 });
+  } else {
+    breakdown.push({ label: 'Tür: ' + (TUR_LABEL[tur] || tur), pts: 0 });
+  }
 
-  // Source
-  if (musteri && musteri.kaynak === 'referans') {
-    score += 1; breakdown.push({ label: 'Kaynak: Referans', pts: 1 });
+  // Source bonus (+1)
+  if (musteri) {
+    const kaynak = musteri.kaynak || '';
+    if (['referans','kaptan','tekrar','acenta'].includes(kaynak)) {
+      score += 1; breakdown.push({ label: 'Kaynak: ' + kaynak, pts: 1 });
+    }
+  }
+
+  // Boat size bonus (+1)
+  if (musteri && musteri.tekneBoyu >= 45) {
+    score += 1; breakdown.push({ label: 'Tekne ≥45ft', pts: 1 });
+  }
+
+  // Season bonus (+1) — Nisan-Ekim arası yüksek sezon Antalya
+  const month = new Date().getMonth(); // 0-indexed
+  if (month >= 3 && month <= 9) {
+    score += 1; breakdown.push({ label: 'Yüksek Sezon (Nis-Eki)', pts: 1 });
   }
 
   return { score, breakdown };
 }
 
+function getSezonInfo() {
+  const month = new Date().getMonth();
+  if (month >= 3 && month <= 9) return { label: 'Yüksek', icon: '☀️', active: true };
+  if (month === 2 || month === 10) return { label: 'Geçiş', icon: '🌤️', active: false };
+  return { label: 'Düşük', icon: '❄️', active: false };
+}
+
 function scoreToP(score) {
-  if (score >= 7) return 1;
+  if (score >= 8) return 1;
   if (score >= 5) return 2;
   if (score >= 3) return 3;
   return 4;
@@ -1163,30 +1268,33 @@ let currentCustomerForTalep = null; // customerId when adding talep
 // ── Render Stats ──────────────────────────────────────────────
 function renderStats() {
   const customers = loadData();
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
 
   let openRequests = 0;
-  let thisMonth = 0;
   let critical = 0;
+  let totalBoats = 0;
+  let approvedRevenue = 0;
 
   customers.forEach(c => {
-    const created = new Date(c.createdAt);
-    if (created.getMonth() === currentMonth && created.getFullYear() === currentYear) {
-      thisMonth++;
-    }
+    if (c.tekneAdi) totalBoats++;
     (c.talepler || []).forEach(t => {
       if (t.durum === 'yeni' || t.durum === 'gorusmede') openRequests++;
       const { p } = calcTalepPriority(t, c);
       if ((p === 1 || p === 2) && t.durum !== 'iptal' && t.durum !== 'onaylandi') critical++;
+      if (t.durum === 'onaylandi' && !t.butceBilinmiyor && t.butce > 0) {
+        approvedRevenue += Number(t.butce);
+      }
     });
   });
 
   document.getElementById('statTotalCustomers').textContent = customers.length;
+  document.getElementById('statTotalBoats').textContent = totalBoats;
   document.getElementById('statOpenRequests').textContent = openRequests;
-  document.getElementById('statThisMonth').textContent = thisMonth;
   document.getElementById('statCritical').textContent = critical;
+  document.getElementById('statRevenue').textContent = '€' + approvedRevenue.toLocaleString('tr-TR');
+
+  const sezon = getSezonInfo();
+  document.getElementById('statSezon').textContent = sezon.label;
+  document.getElementById('statSezonIcon').textContent = sezon.icon;
 }
 
 // ── Avatar ────────────────────────────────────────────────────
@@ -1213,11 +1321,40 @@ const TEKNE_TIPI_LABEL = {
   distan_takma: '🔧 Dıştan Takma'
 };
 const TUR_LABEL = {
-  bakim: '🔧 Bakım',
-  onarim: '🛠️ Onarım',
-  boya: '🎨 Boya',
-  teknik_rapor: '📊 Teknik Rapor',
+  su_alti_bakim: '🚢 Su Altı Bakım',
+  antifouling: '🎨 Antifouling',
+  boya_genel: '🖌️ Gövde Boya',
+  periyodik_bakim: '🔧 Periyodik Bakım',
+  motor_bakim: '⚙️ Motor Bakım',
+  mekanik_torna: '🔩 Mekanik & Torna',
+  saft_pervane: '🌀 Şaft & Pervane',
+  elektrik: '⚡ Elektrik',
+  elektronik: '📡 Elektronik',
+  yelken_doseme: '🧵 Yelken & Döşeme',
+  tesisat: '🚿 Tesisat',
+  cekek: '🏗️ Çekek',
+  teknik_rapor: '📊 Survey',
   diger: '📦 Diğer'
+};
+const MARINA_LABEL = {
+  setur_antalya: 'Setur Antalya',
+  kaleici: 'Kaleiçi',
+  kemer: 'Kemer',
+  celebi: 'Çelebi',
+  marinturk: 'MarinTurk',
+  finike: 'Finike',
+  kas: 'Kaş',
+  port_akdeniz: 'Port Akdeniz',
+  alanya: 'Alanya',
+  diger_marina: 'Diğer'
+};
+const MOTOR_TIPI_LABEL = {
+  inboard_dizel: 'İçten Dizel',
+  inboard_benzin: 'İçten Benzin',
+  outboard: 'Dıştan Takma',
+  sail_drive: 'Sail Drive',
+  shaft_drive: 'Shaft Drive',
+  jet_drive: 'Jet Drive'
 };
 const DURUM_LABEL = {
   yeni: 'Yeni',
@@ -1329,7 +1466,7 @@ function renderCustomerList() {
     const latestTalep = getLatestTalep(c);
     const highP = getHighestPriority(c);
     const talepCount = (c.talepler || []).length;
-    const tekneInfo = [c.tekneAdi, TEKNE_TIPI_LABEL[c.tekneTipi], c.tekneBoyu ? c.tekneBoyu + ' ft' : ''].filter(Boolean).join(' · ');
+    const tekneInfo = [c.tekneAdi, TEKNE_TIPI_LABEL[c.tekneTipi], c.tekneBoyu ? c.tekneBoyu + ' ft' : '', MARINA_LABEL[c.marina] || ''].filter(Boolean).join(' · ');
 
     return `
     <div class="customer-card" style="animation-delay:${idx * 0.04}s">
@@ -1422,6 +1559,7 @@ function renderRequestTable() {
         </select>
       </td>
       <td onclick="event.stopPropagation()" class="text-no-wrap">
+        <a href="servis.html" class="btn btn-accent btn-sm" title="Teklif Oluştur" style="text-decoration:none;">📄</a>
         <button class="btn btn-ghost btn-sm" onclick="editTalepDirect('${c.id}','${t.id}')">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteTalepDirect('${c.id}','${t.id}')">🗑️</button>
       </td>
@@ -1505,12 +1643,16 @@ function editCustomer(id) {
 
 function clearCustomerForm() {
   ['fAd','fSoyad','fFirma','fTelefon','fEmail','fNotlar',
-   'fTekneAdi','fTekneMarkasi','fTekneModeli','fBayrak'].forEach(id => {
+   'fTekneAdi','fTekneMarkasi','fTekneModeli','fBayrak','fMotorMarka'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('fTekneBoyu').value = '';
   document.getElementById('fTekneYili').value = '';
+  document.getElementById('fMotorHP').value = '';
   document.getElementById('fKaynak').value = 'referans';
+  document.getElementById('fMarina').value = '';
+  document.getElementById('fMotorTipi').value = '';
+  document.getElementById('fSonBakim').value = '';
   document.querySelector('input[name="tekneTipi"][value="yelkenli"]').checked = true;
 }
 
@@ -1523,13 +1665,18 @@ function fillCustomerForm(c) {
   document.getElementById('fKaynak').value = c.kaynak || 'referans';
   document.getElementById('fNotlar').value = c.notlar || '';
   document.getElementById('fTekneAdi').value = c.tekneAdi || '';
+  document.getElementById('fMarina').value = c.marina || '';
   const tipiInput = document.querySelector(`input[name="tekneTipi"][value="${c.tekneTipi}"]`);
   if (tipiInput) tipiInput.checked = true;
   document.getElementById('fTekneMarkasi').value = c.tekneMarkasi || '';
   document.getElementById('fTekneModeli').value = c.tekneModeli || '';
   document.getElementById('fTekneBoyu').value = c.tekneBoyu || '';
   document.getElementById('fTekneYili').value = c.tekneYili || '';
+  document.getElementById('fMotorTipi').value = c.motorTipi || '';
+  document.getElementById('fMotorMarka').value = c.motorMarka || '';
+  document.getElementById('fMotorHP').value = c.motorHP || '';
   document.getElementById('fBayrak').value = c.bayrak || '';
+  document.getElementById('fSonBakim').value = c.sonBakim || '';
 }
 
 function saveCustomer() {
@@ -1546,11 +1693,8 @@ function saveCustomer() {
   const now = new Date().toISOString();
   const tekneTipiEl = document.querySelector('input[name="tekneTipi"]:checked');
 
-  if (editingCustomerId) {
-    const idx = customers.findIndex(c => c.id === editingCustomerId);
-    if (idx === -1) return;
-    customers[idx] = {
-      ...customers[idx],
+  function getFormFields() {
+    return {
       ad, soyad,
       firma: document.getElementById('fFirma').value.trim(),
       telefon: document.getElementById('fTelefon').value.trim(),
@@ -1558,12 +1702,26 @@ function saveCustomer() {
       kaynak: document.getElementById('fKaynak').value,
       notlar: document.getElementById('fNotlar').value.trim(),
       tekneAdi: document.getElementById('fTekneAdi').value.trim(),
+      marina: document.getElementById('fMarina').value,
       tekneTipi: tekneTipiEl ? tekneTipiEl.value : 'yelkenli',
       tekneMarkasi: document.getElementById('fTekneMarkasi').value.trim(),
       tekneModeli: document.getElementById('fTekneModeli').value.trim(),
       tekneBoyu: parseFloat(document.getElementById('fTekneBoyu').value) || 0,
       tekneYili: parseInt(document.getElementById('fTekneYili').value) || 0,
+      motorTipi: document.getElementById('fMotorTipi').value,
+      motorMarka: document.getElementById('fMotorMarka').value.trim(),
+      motorHP: parseFloat(document.getElementById('fMotorHP').value) || 0,
       bayrak: document.getElementById('fBayrak').value.trim(),
+      sonBakim: document.getElementById('fSonBakim').value
+    };
+  }
+
+  if (editingCustomerId) {
+    const idx = customers.findIndex(c => c.id === editingCustomerId);
+    if (idx === -1) return;
+    customers[idx] = {
+      ...customers[idx],
+      ...getFormFields(),
       updatedAt: now
     };
   } else {
@@ -1571,19 +1729,7 @@ function saveCustomer() {
       id: genId(),
       createdAt: now,
       updatedAt: now,
-      ad, soyad,
-      firma: document.getElementById('fFirma').value.trim(),
-      telefon: document.getElementById('fTelefon').value.trim(),
-      email: document.getElementById('fEmail').value.trim(),
-      kaynak: document.getElementById('fKaynak').value,
-      notlar: document.getElementById('fNotlar').value.trim(),
-      tekneAdi: document.getElementById('fTekneAdi').value.trim(),
-      tekneTipi: tekneTipiEl ? tekneTipiEl.value : 'yelkenli',
-      tekneMarkasi: document.getElementById('fTekneMarkasi').value.trim(),
-      tekneModeli: document.getElementById('fTekneModeli').value.trim(),
-      tekneBoyu: parseFloat(document.getElementById('fTekneBoyu').value) || 0,
-      tekneYili: parseInt(document.getElementById('fTekneYili').value) || 0,
-      bayrak: document.getElementById('fBayrak').value.trim(),
+      ...getFormFields(),
       talepler: []
     });
   }
@@ -1869,13 +2015,16 @@ function exportCSV() {
   const customers = loadData();
   if (!customers.length) { alert('Dışa aktarılacak müşteri yok.'); return; }
 
-  const headers = ['Ad','Soyad','Firma','Telefon','Email','Tekne Adı','Tekne Tipi','Marka','Model','Boy (ft)','Yıl','Bayrak','Kaynak','Talep Sayısı','Kayıt Tarihi'];
+  const headers = ['Ad','Soyad','Firma','Telefon','Email','Tekne Adı','Marina','Tekne Tipi','Marka','Model','Boy (ft)','Yıl','Motor Tipi','Motor Marka','HP','Bayrak','Son Bakım','Kaynak','Talep Sayısı','Kayıt Tarihi'];
   const rows = customers.map(c => [
     c.ad, c.soyad, c.firma || '',
     c.telefon || '', c.email || '',
-    c.tekneAdi || '', TEKNE_TIPI_LABEL[c.tekneTipi] || c.tekneTipi || '',
+    c.tekneAdi || '', MARINA_LABEL[c.marina] || c.marina || '',
+    TEKNE_TIPI_LABEL[c.tekneTipi] || c.tekneTipi || '',
     c.tekneMarkasi || '', c.tekneModeli || '',
-    c.tekneBoyu || '', c.tekneYili || '', c.bayrak || '',
+    c.tekneBoyu || '', c.tekneYili || '',
+    MOTOR_TIPI_LABEL[c.motorTipi] || '', c.motorMarka || '', c.motorHP || '',
+    c.bayrak || '', formatDate(c.sonBakim),
     c.kaynak || '', (c.talepler || []).length,
     formatDate(c.createdAt)
   ]);
