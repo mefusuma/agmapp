@@ -684,6 +684,71 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .customer-card { animation: fadeIn .25s ease both; }
 
+    /* ── Motor Kayıt (mk-*) ── */
+    .mk-section { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+    .mk-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: rgba(0,0,0,.03);
+    }
+    [data-theme="dark"] .mk-card { background: rgba(255,255,255,.03); }
+    .mk-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; gap: 10px; flex-wrap: wrap;
+    }
+    .mk-card-title { font-weight: 700; font-size: .95rem; color: var(--text); }
+    .mk-count-badge {
+      background: rgba(0,188,212,.15); border: 1px solid rgba(0,188,212,.3);
+      color: #00bcd4; border-radius: 2rem; padding: .15rem .65rem;
+      font-size: .75rem; font-weight: 700;
+    }
+    .mk-add-btn {
+      background: rgba(0,188,212,.1); border: 1px solid rgba(0,188,212,.3);
+      color: #00bcd4; border-radius: 6px; padding: 5px 12px;
+      font-size: .8rem; font-weight: 600; cursor: pointer;
+      transition: background .15s;
+    }
+    .mk-add-btn:hover { background: rgba(0,188,212,.2); }
+    .mk-engine-block {
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 14px; margin-bottom: 10px;
+      background: var(--card);
+    }
+    .mk-engine-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .mk-engine-title { font-weight: 700; font-size: .85rem; color: var(--accent); }
+    .mk-remove-btn {
+      background: rgba(229,57,53,.1); border: 1px solid rgba(229,57,53,.3);
+      color: #e53935; border-radius: 50%; width: 24px; height: 24px;
+      font-size: .75rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .mk-remove-btn:hover { background: rgba(229,57,53,.2); }
+    .mk-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .mk-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .mk-field { display: flex; flex-direction: column; gap: 4px; }
+    .mk-field label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+    .mk-field input, .mk-field select, .mk-field textarea {
+      padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+      background: var(--card); color: var(--text); font-size: .85rem;
+    }
+    .mk-field input:focus, .mk-field select:focus, .mk-field textarea:focus {
+      outline: none; border-color: var(--accent);
+    }
+    .mk-field select:disabled { opacity: .5; cursor: not-allowed; }
+    .mk-spec-group {
+      margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px;
+    }
+    .mk-spec-title { font-size: .75rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+    .mk-toggle-row { cursor: default; }
+    .mk-toggle-label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--text); }
+    .mk-toggle-label input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+    @media (max-width: 500px) {
+      .mk-grid-2, .mk-grid-3 { grid-template-columns: 1fr; }
+    }
+
     /* ── Print ── */
     @media print {
       .theme-toggle, .nav-links, .customer-actions, .btn, .filter-pills, .search-row { display: none !important; }
@@ -969,27 +1034,6 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Motor Tipi</label>
-            <select id="fMotorTipi">
-              <option value="">— Seçiniz —</option>
-              <option value="inboard_dizel">İçten Takma Dizel</option>
-              <option value="inboard_benzin">İçten Takma Benzin</option>
-              <option value="outboard">Dıştan Takma</option>
-              <option value="sail_drive">Sail Drive</option>
-              <option value="shaft_drive">Shaft Drive</option>
-              <option value="jet_drive">Jet Drive</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Motor Marka & HP</label>
-            <div style="display:flex;gap:6px;">
-              <input type="text" id="fMotorMarka" placeholder="Volvo Penta" style="flex:2;">
-              <input type="number" id="fMotorHP" placeholder="HP" min="0" style="flex:1;">
-            </div>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
             <label>Bayrak</label>
             <input type="text" id="fBayrak" placeholder="Türkiye">
           </div>
@@ -998,6 +1042,68 @@
             <input type="date" id="fSonBakim">
           </div>
         </div>
+
+        <!-- ── Motor Kayıt Bölümü ── -->
+        <div class="mk-section">
+
+          <!-- Motor Kartı -->
+          <div class="mk-card">
+            <div class="mk-card-header">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span class="mk-card-title">⚙️ Motor Kayıtları</span>
+                <span class="mk-count-badge" id="mkMotorCount">1 Motor</span>
+              </div>
+              <button type="button" class="mk-add-btn" onclick="addMotorBlock()">+ Motor Ekle</button>
+            </div>
+            <div id="mkMotorList"></div>
+          </div>
+
+          <!-- Jeneratör Kartı -->
+          <div class="mk-card">
+            <div class="mk-card-header mk-toggle-row">
+              <span class="mk-card-title">🔋 Jeneratör</span>
+              <label class="mk-toggle-label">
+                <input type="checkbox" id="mkJenToggle" onchange="toggleJenerator()">
+                <span>Jeneratör var</span>
+              </label>
+            </div>
+            <div id="mkJenFields" style="display:none;">
+              <div class="mk-grid-2">
+                <div class="mk-field">
+                  <label>Marka</label>
+                  <select id="mkJenMarka">
+                    <option value="">— Seçiniz —</option>
+                    <option>Volvo Penta</option><option>Yanmar</option>
+                    <option>Mercury</option><option>Yamaha</option><option>Honda</option>
+                    <option>Westerbeke</option><option>Onan</option>
+                    <option>Fischer Panda</option><option>Diğer</option>
+                  </select>
+                </div>
+                <div class="mk-field">
+                  <label>Model</label>
+                  <input type="text" id="mkJenModel" placeholder="Model adı">
+                </div>
+                <div class="mk-field">
+                  <label>Güç (kW)</label>
+                  <input type="number" id="mkJenKW" placeholder="8" min="0">
+                </div>
+                <div class="mk-field">
+                  <label>Seri Numarası</label>
+                  <input type="text" id="mkJenSeri" placeholder="SN-12345">
+                </div>
+                <div class="mk-field">
+                  <label>Model Yılı</label>
+                  <input type="number" id="mkJenYil" placeholder="2018" min="1980" max="2030">
+                </div>
+              </div>
+              <div class="mk-field" style="margin-top:10px;">
+                <label>Notlar</label>
+                <textarea id="mkJenNotlar" placeholder="Bakım geçmişi, arıza notları…" rows="2"></textarea>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /mk-section -->
       </div>
 
       <!-- Tab 3: Talepler -->
@@ -1643,17 +1749,16 @@ function editCustomer(id) {
 
 function clearCustomerForm() {
   ['fAd','fSoyad','fFirma','fTelefon','fEmail','fNotlar',
-   'fTekneAdi','fTekneMarkasi','fTekneModeli','fBayrak','fMotorMarka'].forEach(id => {
+   'fTekneAdi','fTekneMarkasi','fTekneModeli','fBayrak'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('fTekneBoyu').value = '';
   document.getElementById('fTekneYili').value = '';
-  document.getElementById('fMotorHP').value = '';
   document.getElementById('fKaynak').value = 'referans';
   document.getElementById('fMarina').value = '';
-  document.getElementById('fMotorTipi').value = '';
   document.getElementById('fSonBakim').value = '';
   document.querySelector('input[name="tekneTipi"][value="yelkenli"]').checked = true;
+  clearMotorSection();
 }
 
 function fillCustomerForm(c) {
@@ -1672,11 +1777,9 @@ function fillCustomerForm(c) {
   document.getElementById('fTekneModeli').value = c.tekneModeli || '';
   document.getElementById('fTekneBoyu').value = c.tekneBoyu || '';
   document.getElementById('fTekneYili').value = c.tekneYili || '';
-  document.getElementById('fMotorTipi').value = c.motorTipi || '';
-  document.getElementById('fMotorMarka').value = c.motorMarka || '';
-  document.getElementById('fMotorHP').value = c.motorHP || '';
   document.getElementById('fBayrak').value = c.bayrak || '';
   document.getElementById('fSonBakim').value = c.sonBakim || '';
+  fillMotorSection(c);
 }
 
 function saveCustomer() {
@@ -1708,11 +1811,10 @@ function saveCustomer() {
       tekneModeli: document.getElementById('fTekneModeli').value.trim(),
       tekneBoyu: parseFloat(document.getElementById('fTekneBoyu').value) || 0,
       tekneYili: parseInt(document.getElementById('fTekneYili').value) || 0,
-      motorTipi: document.getElementById('fMotorTipi').value,
-      motorMarka: document.getElementById('fMotorMarka').value.trim(),
-      motorHP: parseFloat(document.getElementById('fMotorHP').value) || 0,
       bayrak: document.getElementById('fBayrak').value.trim(),
-      sonBakim: document.getElementById('fSonBakim').value
+      sonBakim: document.getElementById('fSonBakim').value,
+      motorlar: getMotorlarData(),
+      jenerator: getJeneratorData()
     };
   }
 
@@ -2015,19 +2117,23 @@ function exportCSV() {
   const customers = loadData();
   if (!customers.length) { alert('Dışa aktarılacak müşteri yok.'); return; }
 
-  const headers = ['Ad','Soyad','Firma','Telefon','Email','Tekne Adı','Marina','Tekne Tipi','Marka','Model','Boy (ft)','Yıl','Motor Tipi','Motor Marka','HP','Bayrak','Son Bakım','Kaynak','Talep Sayısı','Kayıt Tarihi'];
-  const rows = customers.map(c => [
-    c.ad, c.soyad, c.firma || '',
-    c.telefon || '', c.email || '',
-    c.tekneAdi || '', MARINA_LABEL[c.marina] || c.marina || '',
-    TEKNE_TIPI_LABEL[c.tekneTipi] || c.tekneTipi || '',
-    c.tekneMarkasi || '', c.tekneModeli || '',
-    c.tekneBoyu || '', c.tekneYili || '',
-    MOTOR_TIPI_LABEL[c.motorTipi] || '', c.motorMarka || '', c.motorHP || '',
-    c.bayrak || '', formatDate(c.sonBakim),
-    c.kaynak || '', (c.talepler || []).length,
-    formatDate(c.createdAt)
-  ]);
+  const headers = ['Ad','Soyad','Firma','Telefon','Email','Tekne Adı','Marina','Tekne Tipi','Marka','Model','Boy (ft)','Yıl','Bayrak','Son Bakım','Motor Sayısı','Motor Özeti','Jeneratör','Kaynak','Talep Sayısı','Kayıt Tarihi'];
+  const rows = customers.map(c => {
+    const motorOzet = (c.motorlar || []).map(m => [m.marka, m.model, m.hp ? m.hp + 'HP' : ''].filter(Boolean).join(' ')).join(' / ');
+    const jenOzet = c.jenerator ? [c.jenerator.marka, c.jenerator.model, c.jenerator.kw ? c.jenerator.kw + 'kW' : ''].filter(Boolean).join(' ') : '';
+    return [
+      c.ad, c.soyad, c.firma || '',
+      c.telefon || '', c.email || '',
+      c.tekneAdi || '', MARINA_LABEL[c.marina] || c.marina || '',
+      TEKNE_TIPI_LABEL[c.tekneTipi] || c.tekneTipi || '',
+      c.tekneMarkasi || '', c.tekneModeli || '',
+      c.tekneBoyu || '', c.tekneYili || '',
+      c.bayrak || '', formatDate(c.sonBakim),
+      (c.motorlar || []).length, motorOzet, jenOzet,
+      c.kaynak || '', (c.talepler || []).length,
+      formatDate(c.createdAt)
+    ];
+  });
 
   const csvContent = [headers, ...rows].map(row =>
     row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
@@ -2059,6 +2165,307 @@ document.addEventListener('keydown', function(e) {
     }
   }
 });
+
+// ── Motor Veritabanları ───────────────────────────────────────
+const MOTOR_DB = {
+  "Volvo Penta": {
+    "D1-13":[13],"D1-20":[20],"D1-30":[30],
+    "D2-40":[40],"D2-50":[50],"D2-55":[55],"D2-60":[60],
+    "D3-110":[110],"D3-130":[130],"D3-150":[150],"D3-170":[170],"D3-200":[200],
+    "D4-150":[150],"D4-180":[180],"D4-210":[210],"D4-230":[230],"D4-260":[260],
+    "D6-280":[280],"D6-310":[310],"D6-330":[330],"D6-370":[370],"D6-400":[400],"D6-435":[435],
+    "IPS 650":[480],"IPS 800":[600],"IPS 950":[700],"IPS 1050":[800]
+  },
+  "Yanmar": {
+    "1GM10":[9],"2GM20":[18],"3GM30":[27],"3HM35":[35],
+    "3JH4":[39],"3JH5":[40],"4JH4":[54],"4JH5":[55],
+    "4JH45":[45],"4JH57":[57],"4JH80":[80],
+    "6LY2":[315],"6LY3":[370],"6LY440":[440],"6LY480":[480]
+  },
+  "Mercury": {
+    "2.5 HP":[2.5],"3.5 HP":[3.5],"4 HP":[4],"5 HP":[5],"6 HP":[6],
+    "8 HP":[8],"9.9 HP":[9.9],"15 HP":[15],"20 HP":[20],"25 HP":[25],
+    "30 HP":[30],"40 HP":[40],"50 HP":[50],"60 HP":[60],"75 HP":[75],
+    "90 HP":[90],"115 HP":[115],"135 HP":[135],"150 HP":[150],"175 HP":[175],
+    "200 HP":[200],"225 HP":[225],"250 HP":[250],"300 HP":[300],
+    "350 HP":[350],"400 HP":[400],"450 HP":[450],"V8 600 HP":[600]
+  },
+  "Yamaha": {
+    "2 HP":[2],"2.5 HP":[2.5],"4 HP":[4],"5 HP":[5],"6 HP":[6],
+    "8 HP":[8],"9.9 HP":[9.9],"15 HP":[15],"20 HP":[20],"25 HP":[25],
+    "30 HP":[30],"40 HP":[40],"50 HP":[50],"60 HP":[60],"70 HP":[70],
+    "80 HP":[80],"90 HP":[90],"100 HP":[100],"115 HP":[115],"130 HP":[130],
+    "150 HP":[150],"175 HP":[175],"200 HP":[200],"225 HP":[225],
+    "250 HP":[250],"300 HP":[300],"350 HP":[350],"425 HP":[425]
+  },
+  "Honda": {
+    "2 HP":[2],"2.3 HP":[2.3],"4 HP":[4],"5 HP":[5],"8 HP":[8],
+    "9.9 HP":[9.9],"10 HP":[10],"15 HP":[15],"20 HP":[20],"25 HP":[25],
+    "30 HP":[30],"40 HP":[40],"50 HP":[50],"60 HP":[60],"75 HP":[75],
+    "90 HP":[90],"100 HP":[100],"115 HP":[115],"130 HP":[130],
+    "150 HP":[150],"200 HP":[200],"225 HP":[225],"250 HP":[250]
+  }
+};
+
+const TAHRIK_DB = {
+  "Volvo Penta": ["Şaft (Straight Shaft)","Saildrive","IPS (Pod Drive)","Aquamatic (Sterndrive AQ)","DPS Sterndrive","DPS-A Sterndrive"],
+  "Yanmar": ["Şaft (Straight Shaft)","Saildrive (SD)","KM Şanzıman","ZF Şanzıman"],
+  "Mercury": ["Dıştan Takma (Outboard)","Sterndrive Alpha One","Sterndrive Bravo One","Sterndrive Bravo Two","Sterndrive Bravo Three"],
+  "Yamaha": ["Dıştan Takma (Outboard)","Sterndrive"],
+  "Honda": ["Dıştan Takma (Outboard)"]
+};
+
+const MK_MARKALAR = ["Volvo Penta","Yanmar","Mercury","Yamaha","Honda"];
+
+// ── Motor Block Management ─────────────────────────────────────
+let mkMotorCounter = 0;
+let mkMotorIds = [];
+
+function mkMotorBlockHTML(num, mId) {
+  const markaOpts = MK_MARKALAR.map(m => `<option value="${m}">${m}</option>`).join('');
+  return `
+  <div class="mk-engine-block" id="${mId}">
+    <div class="mk-engine-header">
+      <span class="mk-engine-title">⚙️ Motor ${num}</span>
+      <button type="button" class="mk-remove-btn" onclick="removeMotorBlock('${mId}')" title="Kaldır">✕</button>
+    </div>
+    <div class="mk-grid-2">
+      <div class="mk-field">
+        <label>Marka</label>
+        <select id="${mId}_marka" onchange="onMotorMarkaDegisti('${mId}')">
+          <option value="">— Seçiniz —</option>${markaOpts}
+        </select>
+      </div>
+      <div class="mk-field">
+        <label>Model</label>
+        <select id="${mId}_model" onchange="onMotorModelDegisti('${mId}')" disabled>
+          <option value="">— Önce marka —</option>
+        </select>
+      </div>
+      <div class="mk-field">
+        <label>Beygir Gücü (HP)</label>
+        <select id="${mId}_hp" disabled>
+          <option value="">— Önce model —</option>
+        </select>
+      </div>
+      <div class="mk-field">
+        <label>Seri Numarası</label>
+        <input type="text" id="${mId}_seri" placeholder="SN-12345">
+      </div>
+      <div class="mk-field">
+        <label>Model Yılı</label>
+        <input type="number" id="${mId}_yil" placeholder="2015" min="1980" max="2030">
+      </div>
+    </div>
+    <div class="mk-grid-2" style="margin-top:10px;">
+      <div class="mk-field">
+        <label>Tahrik Tipi</label>
+        <select id="${mId}_tahrik" disabled>
+          <option value="">— Önce marka —</option>
+        </select>
+      </div>
+      <div class="mk-field">
+        <label>Tahrik Seri No</label>
+        <input type="text" id="${mId}_tahrikSeri" placeholder="Şanzıman / drive seri no">
+      </div>
+    </div>
+    <div class="mk-spec-group">
+      <div class="mk-spec-title">🔩 Pervane & Şaft</div>
+      <div class="mk-grid-3">
+        <div class="mk-field">
+          <label>Şaft Çapı (mm)</label>
+          <input type="number" id="${mId}_saftCap" placeholder="30" min="0" step="0.5">
+        </div>
+        <div class="mk-field">
+          <label>Pervane Pitch (inch)</label>
+          <input type="number" id="${mId}_pitch" placeholder="17" min="0" step="0.5">
+        </div>
+        <div class="mk-field">
+          <label>Pervane Çapı (inch)</label>
+          <input type="number" id="${mId}_pervCap" placeholder="14" min="0" step="0.5">
+        </div>
+        <div class="mk-field">
+          <label>Kanat Sayısı</label>
+          <select id="${mId}_kanat">
+            <option value="">—</option>
+            <option value="2">2 kanat</option><option value="3">3 kanat</option>
+            <option value="4">4 kanat</option><option value="5">5 kanat</option>
+          </select>
+        </div>
+        <div class="mk-field">
+          <label>Pervane Malzeme</label>
+          <select id="${mId}_pervMalzeme">
+            <option value="">—</option>
+            <option value="aluminyum">Alüminyum</option>
+            <option value="paslanmaz">Paslanmaz Çelik</option>
+            <option value="bronz">Bronz</option>
+            <option value="kompozit">Kompozit</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="mk-field" style="margin-top:10px;">
+      <label>Notlar (çalışma saati, bakım geçmişi…)</label>
+      <textarea id="${mId}_notlar" rows="2"></textarea>
+    </div>
+  </div>`;
+}
+
+function addMotorBlock(data) {
+  mkMotorCounter++;
+  const mId = `mk_m${mkMotorCounter}`;
+  mkMotorIds.push(mId);
+  const container = document.getElementById('mkMotorList');
+  const div = document.createElement('div');
+  div.innerHTML = mkMotorBlockHTML(mkMotorIds.length, mId);
+  container.appendChild(div.firstElementChild);
+  updateMkMotorCount();
+  if (data) setTimeout(() => fillMotorBlock(mId, data), 0);
+}
+
+function removeMotorBlock(mId) {
+  if (mkMotorIds.length <= 1) return;
+  document.getElementById(mId)?.remove();
+  mkMotorIds = mkMotorIds.filter(id => id !== mId);
+  document.querySelectorAll('#mkMotorList .mk-engine-title').forEach((el, i) => {
+    el.textContent = `⚙️ Motor ${i + 1}`;
+  });
+  updateMkMotorCount();
+}
+
+function updateMkMotorCount() {
+  const n = mkMotorIds.length;
+  document.getElementById('mkMotorCount').textContent = `${n} Motor`;
+}
+
+function onMotorMarkaDegisti(mId) {
+  const marka = document.getElementById(`${mId}_marka`).value;
+  const modelSel = document.getElementById(`${mId}_model`);
+  const hpSel = document.getElementById(`${mId}_hp`);
+  const tahrikSel = document.getElementById(`${mId}_tahrik`);
+
+  modelSel.innerHTML = '<option value="">— Model seçin —</option>';
+  modelSel.disabled = !marka;
+  hpSel.innerHTML = '<option value="">— Önce model —</option>';
+  hpSel.disabled = true;
+  tahrikSel.innerHTML = '<option value="">— Seçiniz —</option>';
+  tahrikSel.disabled = !marka;
+
+  if (!marka) return;
+  Object.keys(MOTOR_DB[marka] || {}).forEach(m => {
+    const o = document.createElement('option'); o.value = m; o.textContent = m;
+    modelSel.appendChild(o);
+  });
+  (TAHRIK_DB[marka] || []).forEach(t => {
+    const o = document.createElement('option'); o.value = t; o.textContent = t;
+    tahrikSel.appendChild(o);
+  });
+}
+
+function onMotorModelDegisti(mId) {
+  const marka = document.getElementById(`${mId}_marka`).value;
+  const model = document.getElementById(`${mId}_model`).value;
+  const hpSel = document.getElementById(`${mId}_hp`);
+  hpSel.innerHTML = '<option value="">— HP seçin —</option>';
+  hpSel.disabled = !model;
+  const hpVals = MOTOR_DB[marka]?.[model] || [];
+  hpVals.forEach(hp => {
+    const o = document.createElement('option'); o.value = hp; o.textContent = hp + ' HP';
+    hpSel.appendChild(o);
+  });
+  if (hpVals.length === 1) hpSel.value = hpVals[0];
+}
+
+function toggleJenerator() {
+  const on = document.getElementById('mkJenToggle').checked;
+  document.getElementById('mkJenFields').style.display = on ? 'block' : 'none';
+}
+
+function getMotorlarData() {
+  return mkMotorIds.map(mId => {
+    if (!document.getElementById(mId)) return null;
+    const fv = id => document.getElementById(`${mId}_${id}`)?.value || '';
+    return {
+      marka: fv('marka'), model: fv('model'), hp: fv('hp'),
+      seri: fv('seri'), yil: fv('yil'),
+      tahrik: fv('tahrik'), tahrikSeri: fv('tahrikSeri'),
+      saftCap: fv('saftCap'), pitch: fv('pitch'), pervCap: fv('pervCap'),
+      kanat: fv('kanat'), pervMalzeme: fv('pervMalzeme'),
+      notlar: fv('notlar')
+    };
+  }).filter(Boolean);
+}
+
+function getJeneratorData() {
+  if (!document.getElementById('mkJenToggle').checked) return null;
+  return {
+    marka: document.getElementById('mkJenMarka').value,
+    model: document.getElementById('mkJenModel').value,
+    kw: document.getElementById('mkJenKW').value,
+    seri: document.getElementById('mkJenSeri').value,
+    yil: document.getElementById('mkJenYil').value,
+    notlar: document.getElementById('mkJenNotlar').value
+  };
+}
+
+function fillMotorBlock(mId, data) {
+  if (!data || !document.getElementById(mId)) return;
+  if (data.marka) {
+    document.getElementById(`${mId}_marka`).value = data.marka;
+    onMotorMarkaDegisti(mId);
+    if (data.model) {
+      document.getElementById(`${mId}_model`).value = data.model;
+      onMotorModelDegisti(mId);
+      if (data.hp) document.getElementById(`${mId}_hp`).value = data.hp;
+    }
+    if (data.tahrik) document.getElementById(`${mId}_tahrik`).value = data.tahrik;
+  }
+  ['seri','yil','tahrikSeri','saftCap','pitch','pervCap','kanat','pervMalzeme','notlar'].forEach(f => {
+    const el = document.getElementById(`${mId}_${f}`);
+    if (el && data[f] !== undefined) el.value = data[f];
+  });
+}
+
+function fillJeneratorData(jen) {
+  if (!jen) return;
+  document.getElementById('mkJenToggle').checked = true;
+  toggleJenerator();
+  document.getElementById('mkJenMarka').value = jen.marka || '';
+  document.getElementById('mkJenModel').value = jen.model || '';
+  document.getElementById('mkJenKW').value = jen.kw || '';
+  document.getElementById('mkJenSeri').value = jen.seri || '';
+  document.getElementById('mkJenYil').value = jen.yil || '';
+  document.getElementById('mkJenNotlar').value = jen.notlar || '';
+}
+
+function clearMotorSection() {
+  mkMotorIds = [];
+  mkMotorCounter = 0;
+  document.getElementById('mkMotorList').innerHTML = '';
+  addMotorBlock();
+  document.getElementById('mkJenToggle').checked = false;
+  document.getElementById('mkJenFields').style.display = 'none';
+  ['mkJenMarka','mkJenModel','mkJenKW','mkJenSeri','mkJenYil','mkJenNotlar'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+function fillMotorSection(c) {
+  clearMotorSection();
+  // If new-style motorlar array
+  if (c.motorlar && c.motorlar.length) {
+    mkMotorIds = [];
+    mkMotorCounter = 0;
+    document.getElementById('mkMotorList').innerHTML = '';
+    c.motorlar.forEach(m => addMotorBlock(m));
+  }
+  // Legacy single-motor fields → convert to 1 block
+  else if (c.motorMarka || c.motorTipi) {
+    const mId = mkMotorIds[0];
+    if (c.motorMarka) document.getElementById(`${mId}_seri`).value = '';
+  }
+  if (c.jenerator) fillJeneratorData(c.jenerator);
+}
 
 // ── Init ──────────────────────────────────────────────────────
 renderAll();
