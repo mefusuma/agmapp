@@ -1454,6 +1454,86 @@ const TUR_LABEL = {
   teknik_rapor: '📊 Survey',
   diger: '📦 Diğer'
 };
+
+// ── İş emri köprüsü (Modül 4) ─────────────────────────────────
+// İş akışı: talep onaylanır → iş emri doğar. Onaysız talebe iş emri açılmaz.
+const WO_KEY = 'work_orders';
+
+// Talep türü hangi atölyeye düşer. Boş = atölye ataması elle yapılır.
+const TUR_ATOLYE = {
+  su_alti_bakim: 'Su Altı',
+  antifouling: 'Boya',
+  boya_genel: 'Boya',
+  periyodik_bakim: 'Motor',
+  motor_bakim: 'Motor',
+  mekanik_torna: 'Mekanik & Torna',
+  saft_pervane: 'Motor',
+  elektrik: 'Elektrik',
+  elektronik: 'Elektrik',
+  yelken_doseme: 'Döşeme & Yelken',
+  tesisat: 'Tesisat',
+  cekek: 'Çekek',
+  teknik_rapor: '',
+  diger: ''
+};
+
+const P_ONCELIK = { 1: 'acil', 2: 'yuksek', 3: 'orta', 4: 'dusuk' };
+
+function readWorkOrders() {
+  try { return JSON.parse(localStorage.getItem(WO_KEY) || '[]'); } catch (e) { return []; }
+}
+
+function findWorkOrder(talepId) {
+  return readWorkOrders().find(w => w.crm_talep_id === talepId) || null;
+}
+
+function isEmriButonu(c, t) {
+  const mevcut = findWorkOrder(t.id);
+  if (mevcut) {
+    return `<a href="isemri.html" class="btn btn-ghost btn-sm" title="İş emri açıldı — panoya git" style="text-decoration:none;">✅</a>`;
+  }
+  if (t.durum !== 'onaylandi') {
+    return `<button class="btn btn-ghost btn-sm" disabled title="İş emri için talebin onaylanması gerekir" style="opacity:.35; cursor:not-allowed;">🔧</button>`;
+  }
+  return `<button class="btn btn-accent btn-sm" onclick="isEmriAc('${c.id}','${t.id}')" title="İş Emri Aç">🔧</button>`;
+}
+
+function isEmriAc(customerId, talepId) {
+  const c = (loadData() || []).find(x => String(x.id) === String(customerId));
+  if (!c) { alert('Müşteri bulunamadı.'); return; }
+  const t = (c.talepler || []).find(x => String(x.id) === String(talepId));
+  if (!t) { alert('Talep bulunamadı.'); return; }
+  if (findWorkOrder(t.id)) { location.href = 'isemri.html'; return; }
+
+  const { p } = calcTalepPriority(t, c);
+  const marka = [c.tekneMarkasi, c.tekneModeli].filter(Boolean).join(' ');
+  const now = Date.now();
+
+  const wo = {
+    id: now,
+    title: (TUR_LABEL[t.tur] || t.tur || 'İş').replace(/^[^\p{L}]+/u, '').trim(),
+    status: 'baslamadi',
+    oncelik: P_ONCELIK[p] || 'orta',
+    progress: 0,
+    atolye: TUR_ATOLYE[t.tur] || '',
+    kisi: '',
+    veren: '',
+    musteri: c.ad || '',
+    tekne: c.tekneAdi || '',
+    tekne_tipi: '',
+    tarih: '',
+    note: marka ? `${marka}${c.tekneYili ? ' (' + c.tekneYili + ')' : ''}` : '',
+    created: now,
+    // İzlenebilirlik: iş emri hangi talepten doğdu.
+    crm_musteri_id: c.id,
+    crm_talep_id: t.id
+  };
+
+  const list = readWorkOrders();
+  list.push(wo);
+  localStorage.setItem(WO_KEY, JSON.stringify(list));
+  location.href = 'isemri.html';
+}
 const MARINA_LABEL = {
   setur_antalya: 'Setur Antalya',
   kaleici: 'Kaleiçi',
@@ -1678,6 +1758,7 @@ function renderRequestTable() {
       </td>
       <td onclick="event.stopPropagation()" class="text-no-wrap">
         <a href="teklif.html" class="btn btn-accent btn-sm" title="Teklif Oluştur" style="text-decoration:none;">📄</a>
+        ${isEmriButonu(c, t)}
         <button class="btn btn-ghost btn-sm" onclick="editTalepDirect('${c.id}','${t.id}')">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteTalepDirect('${c.id}','${t.id}')">🗑️</button>
       </td>
