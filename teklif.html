@@ -302,6 +302,22 @@
           Motor modeli ve bakım periyodu seçin.
         </div>
       </div>
+
+      <!-- Motor işçilik matrisi: HP kovası bazlı oranlar -->
+      <div style="margin-top:20px;">
+        <button onclick="toggleEngineMatrix()" style="background:none; border:1px dashed #94a3b8; color:#64748b; font-size:12px; padding:7px 14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px; width:100%;">
+          <span id="engineMatrixArrow">▶</span> 🔧 Motor İşçilik Oranları <span style="margin-left:auto; font-size:11px; color:#94a3b8;">Değiştirdikte kaydedilir</span>
+        </button>
+        <div id="engineMatrixPanel" style="display:none; margin-top:12px; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; font-size:12px;">
+          <div style="background:#f1f5f9; padding:8px 14px; font-weight:700; color:#0f2438; border-bottom:1px solid #e2e8f0;">⚙️ Ana Makina Servisi — İşçilik (€)</div>
+          <div style="padding:12px; display:grid; grid-template-columns:repeat(5,1fr); gap:8px;" id="matrixAnaMakina"></div>
+          <div style="background:#f1f5f9; padding:8px 14px; font-weight:700; color:#0f2438; border-top:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0;">🌀 Impeller / Deniz Suyu Pompası — İşçilik (€) <span style="font-weight:400; color:#64748b;">· 500 ve 1000 saatte eklenir</span></div>
+          <div style="padding:12px; display:grid; grid-template-columns:repeat(5,1fr); gap:8px;" id="matrixImpeller"></div>
+          <div style="padding:10px 14px; display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e2e8f0; background:#f8fafc;">
+            <button onclick="saveWizPrices()" style="font-size:12px; background:#0ea5e9; color:#fff; border:none; padding:6px 14px; border-radius:6px; cursor:pointer;">💾 Kaydet</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- TAB: BOYA -->
@@ -1925,9 +1941,11 @@ function selectCrmData(custId, talepId) {
 }
 
 /* ---------- Teklif Sihirbazı ---------- */
+// 351 HP üstü oranlar girilmedi (null): AGM fiyat kararı. Sihirbaz bu kovalarda
+// sessizce 0 yazmak yerine "oran girilmemiş" uyarısı verir.
 const WIZ_DEFAULTS = {
-  ana_makina: {"10-30 HP":280,"40-55 HP":380,"56-75 HP":460,"76-110 HP":560,"111-150 HP":650,"151-230 HP":780,"231-350 HP":950},
-  impeller:   {"10-30 HP":60, "40-55 HP":80, "56-75 HP":90, "76-110 HP":110,"111-150 HP":130,"151-230 HP":160,"231-350 HP":200},
+  ana_makina: {"10-30 HP":280,"40-55 HP":380,"56-75 HP":460,"76-110 HP":560,"111-150 HP":650,"151-230 HP":780,"231-350 HP":950,"351-500 HP":null,"501-750 HP":null,"751-1000 HP":null},
+  impeller:   {"10-30 HP":60, "40-55 HP":80, "56-75 HP":90, "76-110 HP":110,"111-150 HP":130,"151-230 HP":160,"231-350 HP":200,"351-500 HP":null,"501-750 HP":null,"751-1000 HP":null},
   pasta_cila: {"≤25 ft":100,"26-30 ft":150,"31-35 ft":250,"36-40 ft":350,"41-45 ft":450,"46-50 ft":550,"51-55 ft":650,"56-60 ft":800},
   zehirli:    {"≤25 ft":170,"26-30 ft":250,"31-35 ft":280,"36-40 ft":350,"41-45 ft":450,"46-50 ft":550,"51-55 ft":650,"56-60 ft":800}
 };
@@ -1951,13 +1969,22 @@ function loadWizPrices() {
   return prices;
 }
 
+// Boş kutu = oran girilmemiş (null). 0'a çevirmek "işçilik 0 €" demek olurdu.
+function setWizPrice(cat, bucket, raw) {
+  const s = String(raw).trim();
+  wizPrices[cat][bucket] = (s === '') ? null : (parseFloat(s) || 0);
+  updateWizPrices();
+  if (typeof renderWizEngineParts === 'function' && document.getElementById('wizEngineModel')) renderWizEngineParts();
+}
+
 function saveWizPrices() {
   // Read from matrix inputs
   ['ana_makina','impeller','pasta_cila','zehirli'].forEach(cat => {
     const el = document.getElementById('matrix' + cat.split('_').map(w=>w[0].toUpperCase()+w.slice(1)).join(''));
     if (!el) return;
     el.querySelectorAll('input[data-key]').forEach(inp => {
-      wizPrices[cat][inp.dataset.key] = parseFloat(inp.value) || 0;
+      const s = inp.value.trim();
+      wizPrices[cat][inp.dataset.key] = (s === '') ? null : (parseFloat(s) || 0);
     });
   });
   localStorage.setItem('wiz_prices', JSON.stringify(wizPrices));
@@ -1986,20 +2013,32 @@ function renderWizMatrix() {
   cats.forEach(({id, key}) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.innerHTML = Object.entries(wizPrices[key]).map(([bucket, price]) => `
+    el.innerHTML = Object.entries(wizPrices[key]).map(([bucket, price]) => {
+      // Girilmemiş oran: boş kutu + turuncu çerçeve. 0 yazmak fiyatı "0 €" yapardı.
+      const bos = (price === null || price === undefined || price === '');
+      return `
       <div style="text-align:center;">
-        <div style="font-size:10px; color:#64748b; margin-bottom:4px; font-weight:600;">${bucket}</div>
-        <input data-key="${bucket}" data-cat="${key}" type="number" value="${price}"
-          oninput="wizPrices['${key}']['${bucket}']=parseFloat(this.value)||0; updateWizPrices();"
-          style="width:100%; text-align:center; padding:6px 4px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px; font-weight:600; color:#0f2438; background:#fff;">
+        <div style="font-size:10px; color:${bos ? '#c2410c' : '#64748b'}; margin-bottom:4px; font-weight:600;">${bucket}${bos ? ' ⚠' : ''}</div>
+        <input data-key="${bucket}" data-cat="${key}" type="number" value="${bos ? '' : price}" placeholder="girilmedi"
+          oninput="setWizPrice('${key}','${bucket}', this.value); this.style.borderColor = this.value === '' ? '#fdba74' : '#e2e8f0';"
+          style="width:100%; text-align:center; padding:6px 4px; border:1px solid ${bos ? '#fdba74' : '#e2e8f0'}; border-radius:6px; font-size:13px; font-weight:600; color:#0f2438; background:${bos ? '#fff7ed' : '#fff'};">
       </div>
-    `).join('');
+    `; }).join('');
   });
 }
 
 function toggleWizMatrix() {
   const panel = document.getElementById('wizMatrixPanel');
   const arrow = document.getElementById('wizMatrixArrow');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  arrow.textContent = isOpen ? '▶' : '▼';
+  if (!isOpen) renderWizMatrix();
+}
+
+function toggleEngineMatrix() {
+  const panel = document.getElementById('engineMatrixPanel');
+  const arrow = document.getElementById('engineMatrixArrow');
   const isOpen = panel.style.display !== 'none';
   panel.style.display = isOpen ? 'none' : 'block';
   arrow.textContent = isOpen ? '▶' : '▼';
@@ -2031,15 +2070,33 @@ function switchWizTab(tabId) {
   document.getElementById('wizTab-' + tabId).style.display = 'block';
 }
 
+// Kova sınırları: üst HP -> kova adı. WIZ_DEFAULTS anahtarlarıyla birebir aynı olmalı.
+const HP_BUCKETS = [
+  [30,   '10-30 HP'],
+  [55,   '40-55 HP'],
+  [75,   '56-75 HP'],
+  [110,  '76-110 HP'],
+  [150,  '111-150 HP'],
+  [230,  '151-230 HP'],
+  [350,  '231-350 HP'],
+  [500,  '351-500 HP'],
+  [750,  '501-750 HP'],
+  [1000, '751-1000 HP']
+];
+
+// Motorun HP'sini veriden okur. Bilinmiyorsa null döner — uydurmaz.
+function getEngineHp(model) {
+  const data = getAutomationData();
+  const hp = (data.engineHp || {})[model];
+  return (typeof hp === 'number' && hp > 0) ? hp : null;
+}
+
+// HP'ye göre işçilik kovası. HP bilinmiyorsa '' döner; çağıran taraf uyarır.
 function getBucketForEngine(model) {
-  if (!model) return '';
-  if (model.includes('D1-13') || model.includes('D1-20') || model.includes('D1-30')) return '10-30 HP';
-  if (model.includes('D2-40') || model.includes('D2-50') || model.includes('D2-55')) return '40-55 HP';
-  if (model.includes('D2-60') || model.includes('D2-75')) return '56-75 HP';
-  if (model.includes('D3-110')) return '76-110 HP';
-  if (model.includes('D3-130') || model.includes('D3-150')) return '111-150 HP';
-  if (model.includes('D3-170') || model.includes('D3-190') || model.includes('D3-220')) return '151-230 HP';
-  return '40-55 HP';
+  const hp = getEngineHp(model);
+  if (hp === null) return '';
+  for (const [ust, ad] of HP_BUCKETS) if (hp <= ust) return ad;
+  return HP_BUCKETS[HP_BUCKETS.length - 1][1];
 }
 
 function getAutomationData() {
@@ -2090,25 +2147,59 @@ function renderWizEngineParts() {
         <th style="text-align:right; padding-bottom:6px;">Birim Fiyat</th>
       </tr>`;
 
+  const fiyatsizParcalar = [];
   parts.forEach(p => {
-    partsTotal += p.quantity * p.price;
-    html += `<tr style="border-bottom:1px solid #f1f5f9;">
-      <td style="padding:6px 0;">${p.description}</td>
+    const fiyatYok = !p.price;
+    if (fiyatYok) fiyatsizParcalar.push(p.description || '(adsız kalem)');
+    partsTotal += p.quantity * (p.price || 0);
+    html += `<tr style="border-bottom:1px solid #f1f5f9; ${fiyatYok ? 'background:#fff7ed;' : ''}">
+      <td style="padding:6px 0;">${p.description || '<i style="color:#b45309;">(adsız kalem)</i>'}</td>
       <td style="text-align:center; padding:6px 0;">${p.quantity}</td>
-      <td style="text-align:right; padding:6px 0;">${p.price} €</td>
+      <td style="text-align:right; padding:6px 0; ${fiyatYok ? 'color:#c2410c; font-weight:700;' : ''}">${fiyatYok ? '⚠ fiyat yok' : p.price + ' €'}</td>
     </tr>`;
   });
-  
+
+  const hp = getEngineHp(model);
   const bucket = getBucketForEngine(model);
-  currentEngineLabour = (wizPrices.ana_makina[bucket] || 0);
-  if (interval == "500" || interval == "1000") currentEngineLabour += (wizPrices.impeller[bucket] || 0);
+  // İşçilik oranı 0 hiçbir zaman geçerli değil; null/0/tanımsız hepsi "girilmemiş".
+  const oranYok = v => v === null || v === undefined || v === 0;
+  const anaOran = bucket ? wizPrices.ana_makina[bucket] : null;
+  const impOran = bucket ? wizPrices.impeller[bucket] : null;
+  const impellerGerekli = (interval == "500" || interval == "1000");
+
+  currentEngineLabour = (anaOran || 0) + (impellerGerekli ? (impOran || 0) : 0);
+
+  // Eksik olanları topla: teklife eksik fiyat sessizce sızmasın.
+  const eksikler = [];
+  if (hp === null) eksikler.push(`<b>${esc(model)}</b> için HP tanımlı değil — işçilik kovası seçilemiyor. <code>service-data.js</code> içindeki <code>engineHp</code> alanından girin.`);
+  else if (oranYok(anaOran)) eksikler.push(`<b>${esc(bucket)}</b> kovası için ana makina işçilik oranı girilmemiş (${hp} HP). Aşağıdaki <b>Fiyat Matrisi</b>nden girin.`);
+  else if (impellerGerekli && oranYok(impOran)) eksikler.push(`<b>${esc(bucket)}</b> kovası için impeller işçilik oranı girilmemiş.`);
+  if (fiyatsizParcalar.length) eksikler.push(`${fiyatsizParcalar.length} parçanın fiyatı girilmemiş: ${esc(fiyatsizParcalar.join(', '))}`);
+
+  const eksikVar = eksikler.length > 0;
+  const iscilikMetni = (hp === null) ? '— (HP bilinmiyor)'
+    : oranYok(anaOran) ? `— (${bucket} oranı yok)`
+    : `${currentEngineLabour} €`;
 
   html += `</table>
     <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span style="color:#64748b;">Parça Toplamı:</span> <b style="color:#0f2438;">${partsTotal} €</b></div>
-    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:8px;"><span style="color:#64748b;">İşçilik (${bucket}):</span> <b style="color:#0f2438;">${currentEngineLabour} €</b></div>
-    <div style="display:flex; justify-content:space-between; font-size:14px; padding-top:8px; border-top:1px dashed #cbd5e1;"><span style="font-weight:600; color:#0ea5e9;">Paket Toplamı:</span> <b style="color:#0ea5e9;">${partsTotal + currentEngineLabour} €</b></div>
-  </div>`;
-  
+    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:8px;"><span style="color:#64748b;">İşçilik ${hp !== null ? `(${bucket} · ${hp} HP)` : ''}:</span> <b style="color:#0f2438;">${iscilikMetni}</b></div>
+    <div style="display:flex; justify-content:space-between; font-size:14px; padding-top:8px; border-top:1px dashed #cbd5e1;">
+      <span style="font-weight:600; color:${eksikVar ? '#c2410c' : '#0ea5e9'};">Paket Toplamı${eksikVar ? ' (eksik)' : ''}:</span>
+      <b style="color:${eksikVar ? '#c2410c' : '#0ea5e9'};">${partsTotal + currentEngineLabour} €</b>
+    </div>`;
+
+  if (eksikVar) {
+    html += `<div style="margin-top:12px; padding:10px 12px; background:#fff7ed; border:1px solid #fdba74; border-radius:8px;">
+      <div style="font-size:12px; font-weight:700; color:#c2410c; margin-bottom:6px;">⚠ Bu paket eksik fiyatlı — teklife olduğu gibi eklemeyin</div>
+      <ul style="margin:0; padding-left:18px; font-size:11px; color:#7c2d12; line-height:1.6;">
+        ${eksikler.map(e => `<li>${e}</li>`).join('')}
+      </ul>
+    </div>`;
+  }
+
+  html += `</div>`;
+
   currentEngineParts = parts;
   preview.innerHTML = html;
   updateWizPrices();
