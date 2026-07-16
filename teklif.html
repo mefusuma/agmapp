@@ -2172,8 +2172,8 @@ function renderWizEngineParts() {
   // Eksik olanları topla: teklife eksik fiyat sessizce sızmasın.
   const eksikler = [];
   if (hp === null) eksikler.push(`<b>${esc(model)}</b> için HP tanımlı değil — işçilik kovası seçilemiyor. <code>service-data.js</code> içindeki <code>engineHp</code> alanından girin.`);
-  else if (oranYok(anaOran)) eksikler.push(`<b>${esc(bucket)}</b> kovası için ana makina işçilik oranı girilmemiş (${hp} HP). Aşağıdaki <b>Fiyat Matrisi</b>nden girin.`);
-  else if (impellerGerekli && oranYok(impOran)) eksikler.push(`<b>${esc(bucket)}</b> kovası için impeller işçilik oranı girilmemiş.`);
+  else if (oranYok(anaOran)) eksikler.push(`<b>${esc(bucket)}</b> kovası için ana makina işçilik oranı girilmemiş (${hp} HP). Aşağıdaki <b>🔧 Motor İşçilik Oranları</b> panelinden girin.`);
+  else if (impellerGerekli && oranYok(impOran)) eksikler.push(`<b>${esc(bucket)}</b> kovası için impeller işçilik oranı girilmemiş — <b>🔧 Motor İşçilik Oranları</b> panelinin alt yarısı.`);
   if (fiyatsizParcalar.length) eksikler.push(`${fiyatsizParcalar.length} parçanın fiyatı girilmemiş: ${esc(fiyatsizParcalar.join(', '))}`);
 
   const eksikVar = eksikler.length > 0;
