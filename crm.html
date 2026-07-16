@@ -842,6 +842,7 @@
       <div class="card-title">👤 Müşteri Listesi</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-ghost btn-sm" onclick="exportCSV()">📥 CSV İndir</button>
+        <button class="btn btn-ghost btn-sm" onclick="generateTestCustomers()" style="color:var(--primary);border-color:var(--primary)">🧪 15 Test Verisi</button>
         <button class="btn btn-primary btn-sm" onclick="openCustomerModal()">➕ Yeni Müşteri</button>
       </div>
     </div>
@@ -1013,19 +1014,29 @@
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group" style="position:relative;">
             <label>Marka</label>
-            <input type="text" id="fTekneMarkasi" placeholder="Beneteau">
+            <input type="text" id="fTekneMarkasi" placeholder="Beneteau" list="markaList">
+            <datalist id="markaList"></datalist>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="position:relative;">
             <label>Model</label>
-            <input type="text" id="fTekneModeli" placeholder="Oceanis 40.1">
+            <input type="text" id="fTekneModeli" placeholder="Oceanis 40.1" list="modelList">
+            <datalist id="modelList"></datalist>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Boy (feet)</label>
-            <input type="number" id="fTekneBoyu" placeholder="40" min="1" max="300">
+            <input type="number" id="fTekneBoyu" placeholder="40" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>En (m)</label>
+            <input type="number" id="fTekneEni" placeholder="4.18" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Su Çekimi (m)</label>
+            <input type="number" id="fTekneDraft" placeholder="1.68" step="0.01">
           </div>
           <div class="form-group">
             <label>Yıl</label>
@@ -1753,6 +1764,8 @@ function clearCustomerForm() {
     document.getElementById(id).value = '';
   });
   document.getElementById('fTekneBoyu').value = '';
+  document.getElementById('fTekneEni').value = '';
+  document.getElementById('fTekneDraft').value = '';
   document.getElementById('fTekneYili').value = '';
   document.getElementById('fKaynak').value = 'referans';
   document.getElementById('fMarina').value = '';
@@ -1776,6 +1789,8 @@ function fillCustomerForm(c) {
   document.getElementById('fTekneMarkasi').value = c.tekneMarkasi || '';
   document.getElementById('fTekneModeli').value = c.tekneModeli || '';
   document.getElementById('fTekneBoyu').value = c.tekneBoyu || '';
+  document.getElementById('fTekneEni').value = c.tekneEni || '';
+  document.getElementById('fTekneDraft').value = c.tekneDraft || '';
   document.getElementById('fTekneYili').value = c.tekneYili || '';
   document.getElementById('fBayrak').value = c.bayrak || '';
   document.getElementById('fSonBakim').value = c.sonBakim || '';
@@ -1810,6 +1825,8 @@ function saveCustomer() {
       tekneMarkasi: document.getElementById('fTekneMarkasi').value.trim(),
       tekneModeli: document.getElementById('fTekneModeli').value.trim(),
       tekneBoyu: parseFloat(document.getElementById('fTekneBoyu').value) || 0,
+      tekneEni: parseFloat(document.getElementById('fTekneEni').value) || 0,
+      tekneDraft: parseFloat(document.getElementById('fTekneDraft').value) || 0,
       tekneYili: parseInt(document.getElementById('fTekneYili').value) || 0,
       bayrak: document.getElementById('fBayrak').value.trim(),
       sonBakim: document.getElementById('fSonBakim').value,
@@ -2467,7 +2484,124 @@ function fillMotorSection(c) {
   if (c.jenerator) fillJeneratorData(c.jenerator);
 }
 
-// ── Init ──────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────// ── Boat Autocomplete Logic ──
+const BOAT_DATABASE = [
+  { name: "Beneteau", models: [{ name: "Oceanis 30.1", loa: 9.53, beam: 2.99, draft: 1.30 }, { name: "Oceanis 34.1", loa: 10.77, beam: 3.57, draft: 1.50 }, { name: "Oceanis 40.1", loa: 12.87, beam: 4.18, draft: 1.68 }, { name: "Oceanis 46.1", loa: 14.60, beam: 4.50, draft: 1.75 }, { name: "Oceanis 51.1", loa: 15.94, beam: 4.80, draft: 1.85 }, { name: "First 36", loa: 11.00, beam: 3.80, draft: 2.25 }] },
+  { name: "Jeanneau", models: [{ name: "Sun Odyssey 349", loa: 10.34, beam: 3.44, draft: 1.98 }, { name: "Sun Odyssey 410", loa: 12.35, beam: 3.99, draft: 2.14 }, { name: "Sun Odyssey 440", loa: 13.00, beam: 4.29, draft: 2.20 }, { name: "Merry Fisher 895", loa: 8.90, beam: 2.99, draft: 0.63 }] },
+  { name: "Bavaria", models: [{ name: "Cruiser 46", loa: 14.27, beam: 4.35, draft: 2.10 }, { name: "C42", loa: 12.38, beam: 4.29, draft: 2.10 }, { name: "Vision 42", loa: 12.80, beam: 4.05, draft: 1.62 }] },
+  { name: "Hanse", models: [{ name: "315", loa: 9.62, beam: 3.35, draft: 1.85 }, { name: "460", loa: 14.60, beam: 4.79, draft: 2.25 }, { name: "548", loa: 16.22, beam: 5.05, draft: 2.55 }] },
+  { name: "Lagoon", models: [{ name: "40", loa: 11.74, beam: 6.76, draft: 1.35 }, { name: "42", loa: 12.80, beam: 7.70, draft: 1.25 }, { name: "46", loa: 13.99, beam: 7.96, draft: 1.30 }, { name: "51", loa: 15.35, beam: 8.10, draft: 1.38 }] },
+  { name: "Fountaine Pajot", models: [{ name: "Isla 40", loa: 11.93, beam: 6.63, draft: 1.21 }, { name: "Astrea 42", loa: 12.58, beam: 7.20, draft: 1.25 }, { name: "Elba 45", loa: 13.45, beam: 7.55, draft: 1.20 }] },
+  { name: "Dufour", models: [{ name: "37", loa: 10.77, beam: 3.80, draft: 1.90 }, { name: "41", loa: 12.75, beam: 4.30, draft: 2.10 }, { name: "470", loa: 14.85, beam: 4.74, draft: 2.25 }, { name: "530", loa: 16.35, beam: 4.99, draft: 2.30 }] },
+  { name: "Azimut", models: [{ name: "Fly 50", loa: 16.02, beam: 4.65, draft: 1.52 }, { name: "Fly 60", loa: 18.25, beam: 5.05, draft: 1.46 }, { name: "S6", loa: 18.00, beam: 4.75, draft: 1.61 }, { name: "Grande 27M", loa: 26.78, beam: 6.59, draft: 1.93 }] },
+  { name: "Sunseeker", models: [{ name: "Manhattan 52", loa: 17.21, beam: 4.87, draft: 1.26 }, { name: "Manhattan 68", loa: 21.21, beam: 5.26, draft: 1.60 }, { name: "Predator 50", loa: 16.48, beam: 4.48, draft: 1.28 }, { name: "Superhawk 55", loa: 17.13, beam: 4.93, draft: 1.43 }] },
+  { name: "Princess", models: [{ name: "V40", loa: 12.98, beam: 3.81, draft: 1.02 }, { name: "F45", loa: 14.35, beam: 4.25, draft: 1.09 }, { name: "F55", loa: 17.60, beam: 4.87, draft: 1.46 }, { name: "S62", loa: 19.17, beam: 4.87, draft: 1.46 }] },
+  { name: "Bali", models: [{ name: "Catspace", loa: 12.31, beam: 6.59, draft: 1.10 }, { name: "4.2", loa: 12.85, beam: 7.08, draft: 1.12 }, { name: "4.6", loa: 14.28, beam: 7.66, draft: 1.22 }, { name: "4.8", loa: 14.86, beam: 7.88, draft: 1.35 }] },
+  { name: "Leopard", models: [{ name: "42", loa: 12.67, beam: 7.04, draft: 1.40 }, { name: "45", loa: 13.72, beam: 7.36, draft: 1.55 }, { name: "50", loa: 15.40, beam: 8.04, draft: 1.60 }, { name: "53 PC", loa: 16.19, beam: 7.67, draft: 1.20 }] },
+  { name: "Hallberg-Rassy", models: [{ name: "340", loa: 10.36, beam: 3.47, draft: 1.90 }, { name: "400", loa: 12.30, beam: 4.18, draft: 1.92 }, { name: "44", loa: 14.45, beam: 4.20, draft: 2.10 }, { name: "57", loa: 18.44, beam: 5.11, draft: 2.43 }] },
+  { name: "Amel", models: [{ name: "50", loa: 15.51, beam: 4.79, draft: 2.15 }, { name: "60", loa: 19.04, beam: 5.35, draft: 2.35 }, { name: "Super Maramu", loa: 16.00, beam: 4.60, draft: 2.05 }] },
+  { name: "Ferretti", models: [{ name: "500", loa: 15.33, beam: 4.33, draft: 1.23 }, { name: "670", loa: 20.24, beam: 5.38, draft: 1.64 }, { name: "780", loa: 24.01, beam: 5.80, draft: 1.94 }] },
+  { name: "Prestige", models: [{ name: "420", loa: 13.06, beam: 4.10, draft: 1.10 }, { name: "460", loa: 14.29, beam: 4.30, draft: 1.05 }, { name: "520", loa: 16.11, beam: 4.50, draft: 1.05 }] },
+  { name: "Sea Ray", models: [{ name: "Sundancer 320", loa: 9.91, beam: 3.22, draft: 1.04 }, { name: "Sundancer 370", loa: 11.40, beam: 3.66, draft: 1.00 }, { name: "SLX 400", loa: 12.04, beam: 3.70, draft: 1.12 }] }
+];
+
+document.addEventListener('DOMContentLoaded', () => {
+  const markaInput = document.getElementById('fTekneMarkasi');
+  const modelInput = document.getElementById('fTekneModeli');
+  const markaList = document.getElementById('markaList');
+  const modelList = document.getElementById('modelList');
+  
+  // Populate Marka datalist
+  BOAT_DATABASE.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b.name;
+    markaList.appendChild(opt);
+  });
+
+  // Handle Marka Input Change
+  markaInput.addEventListener('input', () => {
+    modelList.innerHTML = ''; // clear models
+    const brand = BOAT_DATABASE.find(b => b.name.toLowerCase() === markaInput.value.toLowerCase());
+    if (brand) {
+      brand.models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.name;
+        modelList.appendChild(opt);
+      });
+    }
+  });
+
+  // Handle Model Input Change (Auto-fill specs)
+  modelInput.addEventListener('input', () => {
+    const brand = BOAT_DATABASE.find(b => b.name.toLowerCase() === markaInput.value.toLowerCase());
+    if (brand) {
+      const model = brand.models.find(m => m.name.toLowerCase() === modelInput.value.toLowerCase());
+      if (model) {
+        // Convert LOA (meters) to Feet roughly, or use direct feet. We will use feet for 'Boy'.
+        const loaFeet = Math.round(model.loa * 3.28084 * 10) / 10;
+        document.getElementById('fTekneBoyu').value = loaFeet;
+        document.getElementById('fTekneEni').value = model.beam;
+        document.getElementById('fTekneDraft').value = model.draft;
+      }
+    }
+  });
+});
+
+// ── Test Data Generator ──
+function generateTestCustomers() {
+  const names = ['Ali', 'Ayşe', 'Mehmet', 'Fatma', 'Ahmet', 'Zeynep', 'Mustafa', 'Elif', 'Can', 'Deniz', 'Burak', 'Selin', 'Emre', 'Gizem', 'Cem'];
+  const surnames = ['Yılmaz', 'Kaya', 'Demir', 'Çelik', 'Şahin', 'Yıldız', 'Öztürk', 'Aydın', 'Özdemir', 'Arslan', 'Doğan', 'Kılıç', 'Aslan', 'Çetin', 'Kara'];
+  const marinas = ['pendik', 'kalamis', 'setur_yalova', 'viaport_tuzla', 'dmarin_turgutreis', 'milta_bodrum', 'dmarin_gocek', 'setur_finike'];
+  const motorBrands = ['Volvo Penta', 'Yanmar', 'Mercury'];
+  
+  const customers = loadData();
+  
+  for (let i = 0; i < 15; i++) {
+    const brandObj = BOAT_DATABASE[Math.floor(Math.random() * BOAT_DATABASE.length)];
+    const modelObj = brandObj.models[Math.floor(Math.random() * brandObj.models.length)];
+    const motorMarka = motorBrands[Math.floor(Math.random() * motorBrands.length)];
+    
+    customers.push({
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+      ad: names[Math.floor(Math.random() * names.length)],
+      soyad: surnames[Math.floor(Math.random() * surnames.length)],
+      firma: Math.random() > 0.7 ? 'Denizcilik A.Ş.' : '',
+      telefon: '05' + Math.floor(Math.random() * 1000000000).toString().padStart(9, '0'),
+      email: `test${i}_${Math.floor(Math.random()*1000)}@example.com`,
+      kaynak: 'referans',
+      notlar: 'Otomatik test verisi',
+      tekneAdi: 'Test ' + modelObj.name,
+      marina: marinas[Math.floor(Math.random() * marinas.length)],
+      tekneTipi: Math.random() > 0.3 ? 'yelkenli' : 'motor_yat',
+      tekneMarkasi: brandObj.name,
+      tekneModeli: modelObj.name,
+      tekneBoyu: Math.round(modelObj.loa * 3.28084 * 10) / 10,
+      tekneEni: modelObj.beam,
+      tekneDraft: modelObj.draft,
+      tekneYili: 2015 + Math.floor(Math.random() * 10),
+      bayrak: 'Türkiye',
+      sonBakim: '2025-05-01',
+      motorlar: [{
+        marka: motorMarka,
+        model: 'Model-' + Math.floor(Math.random() * 100),
+        hp: (Math.floor(Math.random() * 5) * 10 + 30).toString(),
+        seri: 'SN-' + Math.floor(Math.random() * 10000),
+        yil: '2020',
+        tahrik: 'Saildrive',
+        tahrikSeri: ''
+      }],
+      jenerator: null,
+      talepler: [],
+      kayitTarihi: new Date().toISOString()
+    });
+  }
+  
+  saveData(customers);
+  renderAll();
+  alert('15 adet test müşterisi başarıyla eklendi!');
+}
+
+// ── Init ──
 renderAll();
 </script>
 </body>
