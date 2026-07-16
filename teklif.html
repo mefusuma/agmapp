@@ -120,6 +120,7 @@
   .draft-item:hover { background: #f8fafc; }
   .catalog-modal { position: fixed; z-index: 50; background: #fff; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(500px, 94vw); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.3); display: none; }
   .catalog-modal.open { display: block; }
+  #wizardModal.open { display: flex; }
   .modal-header { padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; }
   .catalog-list { padding: 16px; max-height: 70vh; overflow-y: auto; }
 </style>
@@ -230,7 +231,7 @@
 </div>
 
 <div class="overlay" id="wizardOverlay" onclick="closeWizardModal()"></div>
-<div class="catalog-modal" id="wizardModal" style="width: min(700px, 96vw); padding:0; border-radius:14px; overflow:hidden; max-height:92vh; display:flex; flex-direction:column;">
+<div class="catalog-modal" id="wizardModal" style="width: min(700px, 96vw); padding:0; border-radius:14px; overflow:hidden; max-height:92vh; flex-direction:column;">
 
   <!-- Header -->
   <div style="background:linear-gradient(135deg,#0f2438 0%,#1273b8 100%); padding:18px 20px; display:flex; align-items:center; justify-content:space-between;">
