@@ -141,7 +141,7 @@
     <button class="btn btn-ghost btn-sm" onclick="openDrafts()">📂 Taslaklar</button>
     <input type="file" id="importFile" accept=".xlsx" style="display:none" onchange="importXlsx(event)">
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">📥 İçeri Aktar</button>
-    <button class="btn btn-primary btn-sm" onclick="openCrmModal()" style="background:#f59e0b">📥 CRM'den Çek</button>
+    <button class="btn btn-primary btn-sm" onclick="openCrmModal()" style="background:#f59e0b; position:relative;">📥 CRM'den Çek<span id="crmBadge" style="display:none; position:absolute; top:-7px; right:-7px; background:#ef4444; color:#fff; border-radius:999px; min-width:18px; height:18px; line-height:18px; font-size:11px; font-weight:700; text-align:center; padding:0 4px; box-shadow:0 1px 4px rgba(0,0,0,.35);"></span></button>
   </div>
   <div class="page-tabs">
     <button class="page-tab-btn active" data-tab="teklif" onclick="showTab('teklif')">Teklif</button>
@@ -225,7 +225,7 @@
 
 <div class="overlay" id="crmOverlay" onclick="closeCrmModal()"></div>
 <div class="catalog-modal" id="crmModal" style="width: min(700px, 94vw)">
-  <div class="modal-header"><b>CRM'den Talep Seç</b><button class="picker-close" onclick="closeCrmModal()">✕</button></div>
+  <div class="modal-header"><b>CRM'den Talep Seç <span id="crmModalCount" style="font-weight:600; font-size:12px; color:#b45309;"></span></b><button class="picker-close" onclick="closeCrmModal()">✕</button></div>
   <div style="padding:10px 16px 0;"><input type="text" id="crmSearch" placeholder="Müşteri veya Tekne Ara..." oninput="renderCrmList()" style="width:100%; margin-bottom:8px;"></div>
   <div id="crmList" class="catalog-list" style="background:#f8fafc;"></div>
 </div>
@@ -588,6 +588,7 @@ function showTab(t) {
 /* ========== SEKME (TAB) YÖNETİMİ ========== */
 let tabs = [];        // [{ id, quote, currency }]
 let activeTabId = null;
+let focusAfterRender = null;  // render sonrası odaklanacak servis kalemi id'si
 
 let dragSrcId = null; // global drag state
 
@@ -1751,6 +1752,35 @@ async function importXlsx(e) {
 }
 
 /* ---------- CRM Entegrasyonu ---------- */
+/* ---------- CRM gelen iş bildirimi ---------- */
+const CRM_TUR_LABEL = { su_alti_bakim:'Su Altı Bakım', antifouling:'Antifouling', boya_genel:'Gövde Boya', periyodik_bakim:'Periyodik Bakım', motor_bakim:'Motor Bakım', mekanik_torna:'Mekanik & Torna', saft_pervane:'Şaft & Pervane', elektrik:'Elektrik', elektronik:'Elektronik', yelken_doseme:'Yelken & Döşeme', tesisat:'Tesisat', cekek:'Çekek', teknik_rapor:'Survey', diger:'Diğer' };
+const CRM_DURUM = {
+  yeni:           { label:'Yeni',           bg:'#fef3c7', fg:'#b45309' },
+  gorusmede:      { label:'Görüşmede',      bg:'#dbeafe', fg:'#1d4ed8' },
+  teklif_verildi: { label:'Teklif Verildi', bg:'#ede9fe', fg:'#6d28d9' },
+  onaylandi:      { label:'Onaylandı',      bg:'#dcfce7', fg:'#15803d' },
+  iptal:          { label:'İptal',          bg:'#f1f5f9', fg:'#94a3b8' }
+};
+// Teklif bekleyen işler: durumu yeni veya görüşmede olan talepler
+function crmGelenIsler() {
+  let crm = [];
+  try { crm = JSON.parse(localStorage.getItem('crm_data') || '[]'); } catch (e) {}
+  const acik = [];
+  crm.forEach(c => (c.talepler || []).forEach(t => {
+    if (t.durum === 'yeni' || t.durum === 'gorusmede') acik.push({ cust: c, talep: t });
+  }));
+  return acik;
+}
+function updateCrmBadge() {
+  const el = document.getElementById('crmBadge');
+  if (!el) return;
+  const n = crmGelenIsler().length;
+  el.textContent = n;
+  el.style.display = n ? 'block' : 'none';
+}
+// CRM başka sekmede güncellenirse rozet canlı yenilensin
+window.addEventListener('storage', e => { if (e.key === 'crm_data') updateCrmBadge(); });
+
 function openCrmModal() {
   document.getElementById('crmOverlay').classList.add('open');
   document.getElementById('crmModal').classList.add('open');
@@ -1765,12 +1795,25 @@ function renderCrmList() {
   const crmData = crmDataStr ? JSON.parse(crmDataStr) : [];
   const listEl = document.getElementById('crmList');
   const q = (document.getElementById('crmSearch').value || '').toLowerCase();
+
+  const acikMi = t => t.durum === 'yeni' || t.durum === 'gorusmede';
+  const acikSayi = c => (c.talepler || []).filter(acikMi).length;
+
+  const gelen = crmGelenIsler().length;
+  const cntEl = document.getElementById('crmModalCount');
+  if (cntEl) cntEl.textContent = gelen ? `· ${gelen} iş teklif bekliyor` : '';
+
   let html = '';
-  crmData.forEach(cust => {
+  // Teklif bekleyen işi olan müşteriler üstte
+  [...crmData].sort((a, b) => acikSayi(b) - acikSayi(a)).forEach(cust => {
     const cName = ((cust.ad || '') + ' ' + (cust.soyad || '')).toLowerCase().trim();
     const bName = ((cust.tekneAdi || '') + ' ' + (cust.tekneMarkasi || '') + ' ' + (cust.tekneModeli || '')).toLowerCase().trim();
     if (cName.includes(q) || bName.includes(q)) {
-      const talepler = cust.talepler || [];
+      // Bekleyenler önce, iptaller en sonda
+      const talepler = [...(cust.talepler || [])].sort((a, b) => {
+        const w = t => acikMi(t) ? 0 : t.durum === 'iptal' ? 2 : 1;
+        return w(a) - w(b);
+      });
       const boatName = cust.tekneAdi || (cust.tekneMarkasi ? cust.tekneMarkasi + ' ' + cust.tekneModeli : 'Bilinmiyor');
       const loa = cust.tekneBoyu ? cust.tekneBoyu + ' ft' : '';
       const fullName = (cust.ad || '') + ' ' + (cust.soyad || '');
@@ -1783,14 +1826,18 @@ function renderCrmList() {
         html += `<div style="font-size:12px; color:#94a3b8; display:flex; justify-content:space-between; align-items:center;">Kayıtlı talep yok. <button class="btn btn-ghost btn-sm" onclick="selectCrmData('${cust.id}', null)">Müşteriyi Çek</button></div>`;
       } else {
         talepler.forEach(t => {
-           let turLabel = t.tur; // or map if needed
-           html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; padding:8px; background:#f8fafc; border-radius:6px; border:1px solid #e2e8f0;">
-             <div>
-               <div style="font-size:13px; font-weight:600; color:#0ea5e9;">${esc(t.aciklama || t.tur || 'Talep')}</div>
-               <div style="font-size:11px; color:#64748b">${t.tarih || ''} - Öncelik Puanı: <b>${t.score || 0}</b></div>
-             </div>
-             <button class="btn btn-primary btn-sm" onclick="selectCrmData('${cust.id}', '${t.id}')">Bu Talebi Seç</button>
-           </div>`;
+          const d = CRM_DURUM[t.durum] || { label: t.durum || '?', bg: '#f1f5f9', fg: '#475569' };
+          const bekliyor = acikMi(t);
+          const tarih = t.createdAt ? new Date(t.createdAt).toLocaleDateString('tr-TR') : '';
+          const butce = t.butceBilinmiyor ? 'Bütçe: —' : (t.butce ? 'Bütçe: €' + Number(t.butce).toLocaleString('tr-TR') : '');
+          html += `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:6px; padding:8px; background:${bekliyor ? '#fffbeb' : '#f8fafc'}; border-radius:6px; border:1px solid ${bekliyor ? '#fcd34d' : '#e2e8f0'}; ${t.durum === 'iptal' ? 'opacity:.55;' : ''}">
+            <div>
+              <div style="font-size:13px; font-weight:600; color:#0f2438;">${esc(CRM_TUR_LABEL[t.tur] || t.tur || 'Talep')} <span style="display:inline-block; margin-left:6px; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; background:${d.bg}; color:${d.fg};">${d.label}</span></div>
+              ${t.aciklama ? `<div style="font-size:12px; color:#475569; margin-top:2px;">${esc(t.aciklama)}</div>` : ''}
+              <div style="font-size:11px; color:#64748b; margin-top:2px;">${tarih}${tarih && butce ? ' · ' : ''}${butce}</div>
+            </div>
+            ${t.durum === 'iptal' ? '' : `<button class="btn btn-primary btn-sm" style="flex-shrink:0;" onclick="selectCrmData('${cust.id}', '${t.id}')">Bu Talebi Seç</button>`}
+          </div>`;
         });
       }
       html += `</div>`;
@@ -1821,7 +1868,7 @@ function selectCrmData(custId, talepId) {
     const talep = cust.talepler.find(t => t.id === talepId);
     if (talep) {
        const s = newService();
-       s.title = (talep.tur || 'Talep') + ': ' + (talep.aciklama || '');
+       s.title = (CRM_TUR_LABEL[talep.tur] || talep.tur || 'Talep') + (talep.aciklama ? ': ' + talep.aciklama : '');
        s.notes = talep.notlar || '';
        if (quote.services.length === 1 && !quote.services[0].title && quote.services[0].labour.length === 0 && quote.services[0].materials.length === 0) {
          quote.services = [];
@@ -2047,6 +2094,7 @@ function applyWizard() {
 
 /* ---------- başlat ---------- */
 loadState();
+updateCrmBadge();
 </script>
 </body>
 </html>
