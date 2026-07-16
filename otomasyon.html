@@ -94,8 +94,14 @@
     <!-- Left Sidebar: Models & Intervals -->
     <div class="sidebar">
       <div class="sidebar-header">
-        <h3>Motor Modelleri</h3>
+        <h3>Motor Modelleri <span id="treeCount" style="font-weight:400; color:#475569; font-size:11px;"></span></h3>
         <button class="btn btn-primary btn-sm" onclick="addModel()">+ Ekle</button>
+      </div>
+      <div style="padding:0 12px 8px; display:flex; gap:6px; align-items:center;">
+        <input type="text" id="treeSearch" placeholder="🔍 Model ara…" oninput="setTreeQuery(this.value)"
+          style="flex:1; padding:6px 8px; font-size:12px;">
+        <button id="hpFilterBtn" onclick="toggleHpFilter()" title="Sadece HP'si girilmemiş modeller"
+          style="background:none; border:1px solid #334155; color:#64748b; border-radius:6px; padding:5px 8px; font-size:11px; cursor:pointer; white-space:nowrap;">HP? ⚠</button>
       </div>
       <div class="tree-list" id="treeList">
         <!-- Rendered via JS -->
@@ -185,39 +191,94 @@
   }
 
   // Render Models & Intervals Tree
+  // Ağaç filtreleri ve hangi markanın açık olduğu
+  let treeQuery = '';
+  let hpFilter = false;
+  let acikMarkalar = null;
+
+  function setTreeQuery(v) { treeQuery = v.trim().toLowerCase(); renderTree(); }
+
+  function toggleHpFilter() {
+    hpFilter = !hpFilter;
+    const b = document.getElementById('hpFilterBtn');
+    b.style.borderColor = hpFilter ? '#fb923c' : '#334155';
+    b.style.color = hpFilter ? '#fb923c' : '#64748b';
+    b.style.background = hpFilter ? '#3a2718' : 'none';
+    renderTree();
+  }
+
+  function toggleMarka(marka) {
+    acikMarkalar[marka] = !acikMarkalar[marka];
+    renderTree();
+  }
+
+  // Bakım saatleri yalnızca seçili modelde açılır — 59 modelin saatleri
+  // hep açıkken liste okunamıyordu.
   function renderTree() {
     const tree = document.getElementById('treeList');
     if (!autData || !autData.engineParts) return;
-    
-    const models = Object.keys(autData.engineParts).sort();
-    tree.innerHTML = models.map(model => {
-      const isModelActive = activeModel === model;
-      const intervals = Object.keys(autData.engineParts[model] || {})
-        .map(k => k.replace('interval_', ''))
-        .sort((a,b) => parseInt(a) - parseInt(b));
-        
+
+    const hpYok = m => { const h = (autData.engineHp || {})[m]; return !(typeof h === 'number' && h > 0); };
+
+    let models = Object.keys(autData.engineParts).sort();
+    const toplam = models.length;
+    if (treeQuery) models = models.filter(m => engineBrandLabel(m).toLowerCase().includes(treeQuery));
+    if (hpFilter) models = models.filter(hpYok);
+
+    document.getElementById('treeCount').textContent =
+      (models.length === toplam) ? `· ${toplam}` : `· ${models.length}/${toplam}`;
+
+    // Markaya göre grupla
+    const gruplar = {};
+    models.forEach(m => {
+      const marka = engineBrandLabel(m).replace(' ' + m, '');
+      (gruplar[marka] = gruplar[marka] || []).push(m);
+    });
+
+    if (acikMarkalar === null) acikMarkalar = Object.fromEntries(Object.keys(gruplar).map(k => [k, true]));
+
+    if (!models.length) {
+      tree.innerHTML = `<div style="padding:20px; text-align:center; color:#475569; font-size:12px;">Eşleşen model yok.</div>`;
+      return;
+    }
+
+    tree.innerHTML = Object.entries(gruplar).map(([marka, list]) => {
+      // Arama varken gruplar hep açık: kullanıcı aradığını görsün.
+      const acik = treeQuery || hpFilter ? true : acikMarkalar[marka] !== false;
+      const eksikHp = list.filter(hpYok).length;
       return `
-        <div class="tree-item-group">
-          <div class="tree-model-row ${isModelActive && !activeInterval ? 'active' : ''}" onclick="selectModel('${model}')">
-            <span>⚙️ ${engineBrandLabel(model)}${hpEtiketi(model)}</span>
-            <div style="display:flex; gap:6px;" onclick="event.stopPropagation();">
-              <button class="action-icon" onclick="addInterval('${model}')" title="Bakım Saati Ekle">＋</button>
-              <button class="action-icon" onclick="deleteModel('${model}')" title="Modeli Sil">✕</button>
+      <div style="margin-bottom:6px;">
+        <div onclick="toggleMarka('${marka}')" style="display:flex; align-items:center; gap:6px; padding:6px 12px; cursor:pointer; user-select:none; background:#182234; border-radius:6px;">
+          <span style="color:#64748b; font-size:9px;">${acik ? '▼' : '▶'}</span>
+          <span style="font-size:11px; font-weight:700; color:#94a3b8; flex:1;">${marka}</span>
+          ${eksikHp ? `<span style="font-size:10px; color:#fb923c;">${eksikHp} HP?</span>` : ''}
+          <span style="font-size:10px; color:#475569;">${list.length}</span>
+        </div>
+        ${acik ? list.map(model => {
+          const isModelActive = activeModel === model;
+          const intervals = Object.keys(autData.engineParts[model] || {})
+            .map(k => k.replace('interval_', ''))
+            .sort((a, b) => parseInt(a) - parseInt(b));
+          return `
+          <div class="tree-item-group">
+            <div class="tree-model-row ${isModelActive && !activeInterval ? 'active' : ''}" onclick="selectModel('${model}')">
+              <span>${isModelActive ? '▾' : '▸'} ${engineBrandLabel(model).replace(marka + ' ', '')}${hpEtiketi(model)}</span>
+              <div style="display:flex; gap:6px;" onclick="event.stopPropagation();">
+                <span style="font-size:10px; color:#475569;">${intervals.length}</span>
+                <button class="action-icon" onclick="addInterval('${model}')" title="Bakım Saati Ekle">＋</button>
+                <button class="action-icon" onclick="deleteModel('${model}')" title="Modeli Sil">✕</button>
+              </div>
             </div>
-          </div>
-          <div class="tree-intervals">
-            ${intervals.map(int => {
-              const isIntActive = isModelActive && activeInterval === int;
-              return `
-                <div class="tree-interval-row ${isIntActive ? 'active' : ''}" onclick="selectInterval('${model}', '${int}')">
+            ${isModelActive ? `<div class="tree-intervals">
+              ${intervals.map(int => `
+                <div class="tree-interval-row ${activeInterval === int ? 'active' : ''}" onclick="selectInterval('${model}', '${int}')">
                   <span>⏱️ ${int} Saat Bakımı</span>
                   <button class="action-icon" onclick="event.stopPropagation(); deleteInterval('${model}', '${int}')" title="Bakımı Sil">✕</button>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
+                </div>`).join('')}
+            </div>` : ''}
+          </div>`;
+        }).join('') : ''}
+      </div>`;
     }).join('');
   }
 
