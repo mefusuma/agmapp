@@ -843,7 +843,6 @@
       <div class="card-title">👤 Müşteri Listesi</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-ghost btn-sm" onclick="exportCSV()">📥 CSV İndir</button>
-        <button class="btn btn-ghost btn-sm" onclick="generateTestCustomers()" style="color:var(--primary);border-color:var(--primary)">🧪 15 Test Verisi</button>
         <button class="btn btn-primary btn-sm" onclick="openCustomerModal()">➕ Yeni Müşteri</button>
       </div>
     </div>
@@ -2630,60 +2629,186 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── Test Data Generator ──
-function generateTestCustomers() {
-  const names = ['Ali', 'Ayşe', 'Mehmet', 'Fatma', 'Ahmet', 'Zeynep', 'Mustafa', 'Elif', 'Can', 'Deniz', 'Burak', 'Selin', 'Emre', 'Gizem', 'Cem'];
-  const surnames = ['Yılmaz', 'Kaya', 'Demir', 'Çelik', 'Şahin', 'Yıldız', 'Öztürk', 'Aydın', 'Özdemir', 'Arslan', 'Doğan', 'Kılıç', 'Aslan', 'Çetin', 'Kara'];
-  const marinas = ['pendik', 'kalamis', 'setur_yalova', 'viaport_tuzla', 'dmarin_turgutreis', 'milta_bodrum', 'dmarin_gocek', 'setur_finike'];
-  const motorBrands = ['Volvo Penta', 'Yanmar', 'Mercury'];
-  
-  const customers = loadData();
-  
-  for (let i = 0; i < 15; i++) {
-    const brandObj = BOAT_DATABASE[Math.floor(Math.random() * BOAT_DATABASE.length)];
-    const modelObj = brandObj.models[Math.floor(Math.random() * brandObj.models.length)];
-    const motorMarka = motorBrands[Math.floor(Math.random() * motorBrands.length)];
-    
-    customers.push({
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-      ad: names[Math.floor(Math.random() * names.length)],
-      soyad: surnames[Math.floor(Math.random() * surnames.length)],
-      firma: Math.random() > 0.7 ? 'Denizcilik A.Ş.' : '',
-      telefon: '05' + Math.floor(Math.random() * 1000000000).toString().padStart(9, '0'),
-      email: `test${i}_${Math.floor(Math.random()*1000)}@example.com`,
-      kaynak: 'referans',
-      notlar: 'Otomatik test verisi',
-      tekneAdi: 'Test ' + modelObj.name,
-      marina: marinas[Math.floor(Math.random() * marinas.length)],
-      tekneTipi: Math.random() > 0.3 ? 'yelkenli' : 'motor_yat',
-      tekneMarkasi: brandObj.name,
-      tekneModeli: modelObj.name,
-      tekneBoyu: Math.round(modelObj.loa * 3.28084 * 10) / 10,
-      tekneEni: modelObj.beam,
-      tekneDraft: modelObj.draft,
-      tekneYili: 2015 + Math.floor(Math.random() * 10),
-      bayrak: 'Türkiye',
-      sonBakim: '2025-05-01',
-      motorlar: [{
-        marka: motorMarka,
-        model: 'Model-' + Math.floor(Math.random() * 100),
-        hp: (Math.floor(Math.random() * 5) * 10 + 30).toString(),
-        seri: 'SN-' + Math.floor(Math.random() * 10000),
-        yil: '2020',
-        tahrik: 'Saildrive',
-        tahrikSeri: ''
-      }],
-      jenerator: null,
-      talepler: [],
-      kayitTarihi: new Date().toISOString()
-    });
+// ── Başlangıç verisi ──────────────────────────────────────────
+// CRM boşsa bu 10 müşteri yüklenir. Sistem geliştirme aşamasında
+// modüllerin gerçekçi veriyle çalışması için; canlıya geçerken kaldırılacak.
+const SEED_CUSTOMERS = [
+  {
+    id: 'seed-c01', ad: 'Hasan', soyad: 'Demirci', firma: '',
+    telefon: '0532 111 20 01', email: 'hasan.demirci@example.com',
+    kaynak: 'marina', notlar: 'Marina ofisi yönlendirdi. Kışlamayı Setur Antalya\'da geçiriyor.',
+    tekneAdi: 'Meltem', marina: 'setur_antalya', tekneTipi: 'yelkenli',
+    tekneMarkasi: 'Beneteau', tekneModeli: 'Oceanis 46.1',
+    tekneBoyu: 47.9, tekneEni: 4.5, tekneDraft: 2.35, tekneYili: 2021,
+    bayrak: 'Türkiye', sonBakim: '2025-11-10',
+    motorlar: [{ marka: 'Volvo Penta', model: 'D2-75', hp: '75', seri: 'VP2021-4471', yil: '2021', tahrik: 'Saildrive', tahrikSeri: '130S-2201', saftCap: '', pitch: '16', pervCap: '18', kanat: '3', pervMalzeme: 'Bronz Katlanır', notlar: '' }],
+    jenerator: null,
+    talepler: [
+      { id: 'seed-c01-t1', createdAt: '2026-06-20T09:30:00.000Z', updatedAt: '2026-07-02T14:00:00.000Z', kanal: 'telefon', tur: 'antifouling', aciklama: 'Sezon öncesi zehirli boya yenileme, karina temizliği dahil.', butce: 2800, butceBilinmiyor: false, durum: 'onaylandi', notlar: 'Boya markası anlaşıldı: Jotun.' },
+      { id: 'seed-c01-t2', createdAt: '2026-07-12T11:00:00.000Z', updatedAt: '2026-07-12T11:00:00.000Z', kanal: 'whatsapp', tur: 'elektrik', aciklama: 'Servis aküsü şarj tutmuyor, şarj cihazı kontrolü istiyor.', butce: 900, butceBilinmiyor: false, durum: 'yeni', notlar: '' }
+    ],
+    kayitTarihi: '2025-09-14T10:00:00.000Z'
+  },
+  {
+    id: 'seed-c02', ad: 'Ayşe', soyad: 'Korkmaz', firma: 'Korkmaz Turizm Ltd.',
+    telefon: '0533 111 20 02', email: 'ayse.korkmaz@example.com',
+    kaynak: 'referans', notlar: 'Charter işletmesi, sezon aralarında hızlı dönüş bekliyor.',
+    tekneAdi: 'Blue Pearl', marina: 'kaleici', tekneTipi: 'motor',
+    tekneMarkasi: 'Azimut', tekneModeli: '55',
+    tekneBoyu: 55.1, tekneEni: 4.75, tekneDraft: 1.4, tekneYili: 2018,
+    bayrak: 'Türkiye', sonBakim: '2026-03-05',
+    motorlar: [
+      { marka: 'MAN', model: 'R6-800', hp: '800', seri: 'MAN18-0341', yil: '2018', tahrik: 'Şaft', tahrikSeri: '', saftCap: '60', pitch: '', pervCap: '', kanat: '4', pervMalzeme: 'NiBral', notlar: 'İskele motor' },
+      { marka: 'MAN', model: 'R6-800', hp: '800', seri: 'MAN18-0342', yil: '2018', tahrik: 'Şaft', tahrikSeri: '', saftCap: '60', pitch: '', pervCap: '', kanat: '4', pervMalzeme: 'NiBral', notlar: 'Sancak motor' }
+    ],
+    jenerator: { marka: 'Kohler', model: '17EFKOZD', kw: '17', seri: 'KH-88112', yil: '2018', notlar: '' },
+    talepler: [
+      { id: 'seed-c02-t1', createdAt: '2026-07-05T08:15:00.000Z', updatedAt: '2026-07-10T16:30:00.000Z', kanal: 'yuz_yuze', tur: 'motor_bakim', aciklama: 'Her iki ana makinede 1000 saat bakımı; enjektör kontrolü dahil.', butce: 12000, butceBilinmiyor: false, durum: 'gorusmede', notlar: 'Charter takvimi nedeniyle Ağustos ilk hafta isteniyor.' }
+    ],
+    kayitTarihi: '2025-06-02T09:00:00.000Z'
+  },
+  {
+    id: 'seed-c03', ad: 'Jürgen', soyad: 'Weber', firma: '',
+    telefon: '0542 111 20 03', email: 'juergen.weber@example.com',
+    kaynak: 'acenta', notlar: 'Almanca/İngilizce iletişim. Kışın teknede yaşıyor.',
+    tekneAdi: 'Nordwind', marina: 'finike', tekneTipi: 'yelkenli',
+    tekneMarkasi: 'Hanse', tekneModeli: '575',
+    tekneBoyu: 56.4, tekneEni: 5.4, tekneDraft: 2.8, tekneYili: 2016,
+    bayrak: 'Almanya', sonBakim: '2025-10-20',
+    motorlar: [{ marka: 'Volvo Penta', model: 'D3-110', hp: '110', seri: 'VP16-7702', yil: '2016', tahrik: 'Şaft', tahrikSeri: '', saftCap: '35', pitch: '17', pervCap: '20', kanat: '3', pervMalzeme: 'Bronz Sabit', notlar: '' }],
+    jenerator: { marka: 'Fischer Panda', model: '8000i', kw: '8', seri: 'FP-33421', yil: '2017', notlar: 'İnverter tip' },
+    talepler: [
+      { id: 'seed-c03-t1', createdAt: '2026-06-10T13:45:00.000Z', updatedAt: '2026-07-01T10:00:00.000Z', kanal: 'email', tur: 'cekek', aciklama: 'Eylül başı çekek + kışlama hazırlığı, karina kontrolü.', butce: 4500, butceBilinmiyor: false, durum: 'onaylandi', notlar: 'Vinç randevusu alınacak.' },
+      { id: 'seed-c03-t2', createdAt: '2026-06-28T09:00:00.000Z', updatedAt: '2026-07-08T15:20:00.000Z', kanal: 'email', tur: 'boya_genel', aciklama: 'Gövde üstü jelkot yenileme ve pasta-cila; UV yanıkları mevcut.', butce: 7500, butceBilinmiyor: false, durum: 'teklif_verildi', notlar: 'Teklif iletildi, dönüş bekleniyor.' }
+    ],
+    kayitTarihi: '2024-11-18T14:30:00.000Z'
+  },
+  {
+    id: 'seed-c04', ad: 'Mehmet', soyad: 'Aksoy', firma: '',
+    telefon: '0535 111 20 04', email: 'mehmet.aksoy@example.com',
+    kaynak: 'web', notlar: 'Hafta sonu balıkçısı, küçük işler için gelir.',
+    tekneAdi: 'Martı', marina: 'alanya', tekneTipi: 'distan_takma',
+    tekneMarkasi: 'Sea Ray', tekneModeli: '190 Sport',
+    tekneBoyu: 19.0, tekneEni: 2.3, tekneDraft: 0.4, tekneYili: 2019,
+    bayrak: 'Türkiye', sonBakim: '2026-04-12',
+    motorlar: [{ marka: 'Mercury', model: 'F115 EFI', hp: '115', seri: 'MC19-5583', yil: '2019', tahrik: 'Dıştan Takma', tahrikSeri: '', saftCap: '', pitch: '14', pervCap: '13.8', kanat: '3', pervMalzeme: 'Alüminyum', notlar: '' }],
+    jenerator: null,
+    talepler: [
+      { id: 'seed-c04-t1', createdAt: '2026-07-14T17:00:00.000Z', updatedAt: '2026-07-14T17:00:00.000Z', kanal: 'web', tur: 'periyodik_bakim', aciklama: '100 saat bakımı: yağ, buji, şanzıman yağı.', butce: 600, butceBilinmiyor: false, durum: 'yeni', notlar: '' }
+    ],
+    kayitTarihi: '2026-04-01T08:45:00.000Z'
+  },
+  {
+    id: 'seed-c05', ad: 'Elena', soyad: 'Petrova', firma: '',
+    telefon: '0544 111 20 05', email: 'elena.petrova@example.com',
+    kaynak: 'web', notlar: 'İngilizce iletişim. Kaş\'ta bağlı, yaz boyu Akdeniz turu yapıyor.',
+    tekneAdi: 'White Wings', marina: 'kas', tekneTipi: 'katamaran',
+    tekneMarkasi: 'Lagoon', tekneModeli: '42',
+    tekneBoyu: 42.0, tekneEni: 7.7, tekneDraft: 1.25, tekneYili: 2020,
+    bayrak: 'Malta', sonBakim: '2025-12-01',
+    motorlar: [
+      { marka: 'Yanmar', model: '4JH45', hp: '45', seri: 'YM20-1101', yil: '2020', tahrik: 'Saildrive', tahrikSeri: 'SD60-01', saftCap: '', pitch: '15', pervCap: '16', kanat: '3', pervMalzeme: 'Bronz Katlanır', notlar: 'İskele gövde' },
+      { marka: 'Yanmar', model: '4JH45', hp: '45', seri: 'YM20-1102', yil: '2020', tahrik: 'Saildrive', tahrikSeri: 'SD60-02', saftCap: '', pitch: '15', pervCap: '16', kanat: '3', pervMalzeme: 'Bronz Katlanır', notlar: 'Sancak gövde' }
+    ],
+    jenerator: { marka: 'Onan', model: 'MDKBL', kw: '9', seri: 'ON-45210', yil: '2020', notlar: '' },
+    talepler: [
+      { id: 'seed-c05-t1', createdAt: '2026-06-25T10:30:00.000Z', updatedAt: '2026-07-09T12:00:00.000Z', kanal: 'whatsapp', tur: 'saft_pervane', aciklama: 'Sancak saildrive\'da titreşim; pervane balans + keçe kontrolü.', butce: 3200, butceBilinmiyor: false, durum: 'gorusmede', notlar: 'Dalgıç ön kontrolü yapıldı, çekek gerekebilir.' },
+      { id: 'seed-c05-t2', createdAt: '2026-07-11T14:15:00.000Z', updatedAt: '2026-07-11T14:15:00.000Z', kanal: 'whatsapp', tur: 'yelken_doseme', aciklama: 'Trampolin ağı yenileme ve bimini fermuarları.', butce: 0, butceBilinmiyor: true, durum: 'yeni', notlar: '' }
+    ],
+    kayitTarihi: '2026-02-20T11:00:00.000Z'
+  },
+  {
+    id: 'seed-c06', ad: 'İbrahim', soyad: 'Yalçın', firma: '',
+    telefon: '0536 111 20 06', email: 'ibrahim.yalcin@example.com',
+    kaynak: 'kaptan', notlar: 'Kaptan Nuri yönlendirdi. Teknesini kendisi kullanmıyor, kaptanla çalışıyor.',
+    tekneAdi: 'Rüzgargülü', marina: 'kemer', tekneTipi: 'yelkenli',
+    tekneMarkasi: 'Bavaria', tekneModeli: 'Cruiser 46',
+    tekneBoyu: 46.8, tekneEni: 4.35, tekneDraft: 2.1, tekneYili: 2017,
+    bayrak: 'Türkiye', sonBakim: '2026-01-15',
+    motorlar: [{ marka: 'Volvo Penta', model: 'D2-55', hp: '55', seri: 'VP17-2209', yil: '2017', tahrik: 'Saildrive', tahrikSeri: '130S-1707', saftCap: '', pitch: '15', pervCap: '17', kanat: '2', pervMalzeme: 'Bronz Katlanır', notlar: '' }],
+    jenerator: null,
+    talepler: [
+      { id: 'seed-c06-t1', createdAt: '2026-07-01T09:00:00.000Z', updatedAt: '2026-07-06T17:45:00.000Z', kanal: 'telefon', tur: 'su_alti_bakim', aciklama: 'Aylık karina temizliği + anot kontrolü (dalgıçla).', butce: 1500, butceBilinmiyor: false, durum: 'onaylandi', notlar: 'Aylık periyodik anlaşma görüşülecek.' }
+    ],
+    kayitTarihi: '2025-03-08T16:20:00.000Z'
+  },
+  {
+    id: 'seed-c07', ad: 'Sophie', soyad: 'Laurent', firma: '',
+    telefon: '0545 111 20 07', email: 'sophie.laurent@example.com',
+    kaynak: 'tekrar', notlar: 'Geçen yıl motor bakımı yapıldı, memnun kaldı. Fransızca/İngilizce.',
+    tekneAdi: 'Libellule', marina: 'port_akdeniz', tekneTipi: 'yelkenli',
+    tekneMarkasi: 'Jeanneau', tekneModeli: 'Sun Odyssey 449',
+    tekneBoyu: 45.1, tekneEni: 4.24, tekneDraft: 2.2, tekneYili: 2019,
+    bayrak: 'Fransa', sonBakim: '2025-08-30',
+    motorlar: [{ marka: 'Yanmar', model: '4JH57', hp: '57', seri: 'YM19-8830', yil: '2019', tahrik: 'Saildrive', tahrikSeri: 'SD25-19', saftCap: '', pitch: '16', pervCap: '17', kanat: '3', pervMalzeme: 'Bronz Katlanır', notlar: '' }],
+    jenerator: null,
+    talepler: [
+      { id: 'seed-c07-t1', createdAt: '2026-07-13T10:00:00.000Z', updatedAt: '2026-07-13T10:00:00.000Z', kanal: 'email', tur: 'teknik_rapor', aciklama: 'Satış öncesi ekspertiz raporu (survey) talep ediyor.', butce: 800, butceBilinmiyor: false, durum: 'yeni', notlar: 'Alıcı adayı İngiliz, rapor İngilizce olacak.' },
+      { id: 'seed-c07-t2', createdAt: '2026-05-18T15:30:00.000Z', updatedAt: '2026-06-02T09:10:00.000Z', kanal: 'telefon', tur: 'tesisat', aciklama: 'Sıcak su boyleri değişimi.', butce: 1200, butceBilinmiyor: false, durum: 'iptal', notlar: 'Müşteri parçayı Fransa\'dan kendisi getirtecek, iptal etti.' }
+    ],
+    kayitTarihi: '2024-07-22T12:00:00.000Z'
+  },
+  {
+    id: 'seed-c08', ad: 'Osman', soyad: 'Kara', firma: 'Kara İnşaat A.Ş.',
+    telefon: '0537 111 20 08', email: 'osman.kara@example.com',
+    kaynak: 'fuar', notlar: 'Boat Show\'da tanışıldı. Elektronik yenilemeye bütçe ayırmış durumda.',
+    tekneAdi: 'Karayel', marina: 'celebi', tekneTipi: 'motor',
+    tekneMarkasi: 'Princess', tekneModeli: 'V50',
+    tekneBoyu: 50.3, tekneEni: 4.31, tekneDraft: 1.1, tekneYili: 2015,
+    bayrak: 'Türkiye', sonBakim: '2026-02-28',
+    motorlar: [
+      { marka: 'Volvo Penta', model: 'D6-435 IPS600', hp: '435', seri: 'VP15-6641', yil: '2015', tahrik: 'IPS', tahrikSeri: 'IPS600-A', saftCap: '', pitch: '', pervCap: '', kanat: '4', pervMalzeme: 'NiBral', notlar: 'İskele' },
+      { marka: 'Volvo Penta', model: 'D6-435 IPS600', hp: '435', seri: 'VP15-6642', yil: '2015', tahrik: 'IPS', tahrikSeri: 'IPS600-B', saftCap: '', pitch: '', pervCap: '', kanat: '4', pervMalzeme: 'NiBral', notlar: 'Sancak' }
+    ],
+    jenerator: { marka: 'Onan', model: 'MDKDP', kw: '11', seri: 'ON-77034', yil: '2015', notlar: '' },
+    talepler: [
+      { id: 'seed-c08-t1', createdAt: '2026-06-30T11:20:00.000Z', updatedAt: '2026-07-07T13:00:00.000Z', kanal: 'yuz_yuze', tur: 'elektronik', aciklama: 'Chartplotter + radar + otopilot komple yenileme (Garmin istiyor).', butce: 5400, butceBilinmiyor: false, durum: 'gorusmede', notlar: 'Cihaz listesi çıkarıldı, montaj süresi netleşecek.' }
+    ],
+    kayitTarihi: '2026-03-15T10:30:00.000Z'
+  },
+  {
+    id: 'seed-c09', ad: 'Ali Rıza', soyad: 'Öztürk', firma: '',
+    telefon: '0538 111 20 09', email: 'aliriza.ozturk@example.com',
+    kaynak: 'referans', notlar: 'Hasan Demirci\'nin marina komşusu, onun tavsiyesiyle geldi.',
+    tekneAdi: 'Derya', marina: 'marinturk', tekneTipi: 'yelkenli',
+    tekneMarkasi: 'Hallberg-Rassy', tekneModeli: '40',
+    tekneBoyu: 41.2, tekneEni: 3.98, tekneDraft: 1.98, tekneYili: 2012,
+    bayrak: 'Türkiye', sonBakim: '2025-09-05',
+    motorlar: [{ marka: 'Volvo Penta', model: 'D2-40', hp: '40', seri: 'VP12-0518', yil: '2012', tahrik: 'Şaft', tahrikSeri: '', saftCap: '30', pitch: '14', pervCap: '16', kanat: '3', pervMalzeme: 'Bronz Sabit', notlar: 'Kaide contası geçen yıl yenilendi.' }],
+    jenerator: null,
+    talepler: [
+      { id: 'seed-c09-t1', createdAt: '2026-06-15T08:40:00.000Z', updatedAt: '2026-07-03T11:30:00.000Z', kanal: 'telefon', tur: 'motor_bakim', aciklama: 'Ana makine büyük bakım: enjektörler, eşanjör, motor kulakları.', butce: 2200, butceBilinmiyor: false, durum: 'onaylandi', notlar: 'Parçalar sipariş edildi.' },
+      { id: 'seed-c09-t2', createdAt: '2026-07-10T16:00:00.000Z', updatedAt: '2026-07-10T16:00:00.000Z', kanal: 'telefon', tur: 'mekanik_torna', aciklama: 'Şaft yatağı (kestene) boşluk yapmış, torna işi çıkabilir.', butce: 1100, butceBilinmiyor: false, durum: 'yeni', notlar: '' }
+    ],
+    kayitTarihi: '2025-01-30T09:15:00.000Z'
+  },
+  {
+    id: 'seed-c10', ad: 'Maria', soyad: 'Rossi', firma: '',
+    telefon: '0546 111 20 10', email: 'maria.rossi@example.com',
+    kaynak: 'sosyal_medya', notlar: 'Instagram\'dan ulaştı. İtalyanca/İngilizce. Alanya\'da yazlığı var.',
+    tekneAdi: 'Stella Marina', marina: 'alanya', tekneTipi: 'motor',
+    tekneMarkasi: 'Cranchi', tekneModeli: 'E52 F',
+    tekneBoyu: 52.0, tekneEni: 4.6, tekneDraft: 1.2, tekneYili: 2017,
+    bayrak: 'İtalya', sonBakim: '2025-07-19',
+    motorlar: [
+      { marka: 'Volvo Penta', model: 'D8-600 IPS800', hp: '600', seri: 'VP17-9921', yil: '2017', tahrik: 'IPS', tahrikSeri: 'IPS800-A', saftCap: '', pitch: '', pervCap: '', kanat: '4', pervMalzeme: 'NiBral', notlar: 'İskele' },
+      { marka: 'Volvo Penta', model: 'D8-600 IPS800', hp: '600', seri: 'VP17-9922', yil: '2017', tahrik: 'IPS', tahrikSeri: 'IPS800-B', saftCap: '', pitch: '', pervCap: '', kanat: '4', pervMalzeme: 'NiBral', notlar: 'Sancak' }
+    ],
+    jenerator: { marka: 'Kohler', model: '13.5EFKOZD', kw: '13.5', seri: 'KH-51299', yil: '2017', notlar: '' },
+    talepler: [
+      { id: 'seed-c10-t1', createdAt: '2026-06-22T13:00:00.000Z', updatedAt: '2026-07-05T10:45:00.000Z', kanal: 'email', tur: 'antifouling', aciklama: 'Zehirli boya + IPS ayak antifouling; geçen sezon boyası dökülmüş.', butce: 3900, butceBilinmiyor: false, durum: 'teklif_verildi', notlar: 'Teklif gönderildi, İtalya dönüşü karar verecek.' }
+    ],
+    kayitTarihi: '2025-05-11T14:50:00.000Z'
   }
-  
-  saveData(customers);
-  renderAll();
-  alert('15 adet test müşterisi başarıyla eklendi!');
+];
+
+function seedCustomers() {
+  if (loadData().length) return;
+  saveData(SEED_CUSTOMERS);
 }
 
 // ── Init ──
+seedCustomers();
 renderAll();
 </script>
 </body>
