@@ -3166,14 +3166,47 @@ function engineBrandLabel(model) {
   return (/^D\d/.test(model) ? 'Volvo Penta ' : 'Yanmar ') + model;
 }
 
-// İşçilik oran tabloları — tek kaynak. teklif.html ve otomasyon.html buradan okur.
-// null = oran girilmemiş. 0 yazmayın: 0 EUR işçilik geçerli bir fiyat sayılır.
-const WIZ_PRICE_DEFAULTS = {
-  ana_makina: { "10-30 HP":280, "40-55 HP":380, "56-75 HP":460, "76-110 HP":560, "111-150 HP":650, "151-230 HP":780, "231-350 HP":950, "351-500 HP":null, "501-750 HP":null, "751-1000 HP":null },
-  impeller:   { "10-30 HP":60,  "40-55 HP":80,  "56-75 HP":90,  "76-110 HP":110, "111-150 HP":130, "151-230 HP":160, "231-350 HP":200, "351-500 HP":null, "501-750 HP":null, "751-1000 HP":null },
-  pasta_cila: { "≤25 ft":100, "26-30 ft":150, "31-35 ft":250, "36-40 ft":350, "41-45 ft":450, "46-50 ft":550, "51-55 ft":650, "56-60 ft":800 },
-  zehirli:    { "≤25 ft":170, "26-30 ft":250, "31-35 ft":280, "36-40 ft":350, "41-45 ft":450, "46-50 ft":550, "51-55 ft":650, "56-60 ft":800 }
-};
+// ─────────────────────────────────────────────────────────────────────────
+// İŞÇİLİK ORAN TABLOLARI — KAYIT DEFTERİ
+//
+// YENİ KONU EKLEMEK: aşağıya bir kayıt ekleyin, hepsi bu. Otomasyon ekranı
+// bölümü kendiliğinden çizer, teklif sihirbazı okur. Başka yere dokunmayın.
+//
+//   { key:  'jenerator',            <- kod içinde kullanılan ad (benzersiz)
+//     ad:   'Jeneratör Servisi',    <- ekranda görünen başlık
+//     ikon: '🔌',
+//     eksen:'HP',                   <- kovaların neye göre ayrıldığı (HP / LOA / ...)
+//     oranlar: { '5-10 kW': 250, '11-20 kW': null } }
+//
+// null = oran girilmemiş. 0 YAZMAYIN: 0 geçerli bir fiyat sayılır ve
+// teklife "işçilik 0 €" diye sessizce girer.
+// ─────────────────────────────────────────────────────────────────────────
+const MATRIX_DEFS = [
+  {
+    key: 'ana_makina', ad: 'Ana Makina Periyodik Bakım', ikon: '⚙️', eksen: 'HP',
+    oranlar: { "10-30 HP":280, "40-55 HP":380, "56-75 HP":460, "76-110 HP":560, "111-150 HP":650, "151-230 HP":780, "231-350 HP":950, "351-500 HP":null, "501-750 HP":null, "751-1000 HP":null }
+  },
+  {
+    key: 'impeller', ad: 'İmpeller Değişimi', ikon: '🔄', eksen: 'HP',
+    oranlar: { "10-30 HP":60, "40-55 HP":80, "56-75 HP":90, "76-110 HP":110, "111-150 HP":130, "151-230 HP":160, "231-350 HP":200, "351-500 HP":null, "501-750 HP":null, "751-1000 HP":null }
+  },
+  {
+    key: 'pasta_cila', ad: 'Pasta & Cila', ikon: '✨', eksen: 'LOA',
+    oranlar: { "≤25 ft":100, "26-30 ft":150, "31-35 ft":250, "36-40 ft":350, "41-45 ft":450, "46-50 ft":550, "51-55 ft":650, "56-60 ft":800 }
+  },
+  {
+    key: 'zehirli', ad: 'Zehirli Boya', ikon: '⚓', eksen: 'LOA',
+    oranlar: { "≤25 ft":170, "26-30 ft":250, "31-35 ft":280, "36-40 ft":350, "41-45 ft":450, "46-50 ft":550, "51-55 ft":650, "56-60 ft":800 }
+  }
+];
+
+// Kayıt defterinden türetilir; kod bunu {key: {kova: fiyat}} olarak kullanır.
+const WIZ_PRICE_DEFAULTS = MATRIX_DEFS.reduce((a, d) => (a[d.key] = { ...d.oranlar }, a), {});
+
+// Bir tablonun tanımı. Bilinmeyen key için güvenli varsayılan döner.
+function matrisTanim(key) {
+  return MATRIX_DEFS.find(d => d.key === key) || { key, ad: key, ikon: '•', eksen: '' };
+}
 
 // Kaydedilmiş oranları varsayılanla birleştirir: yeni eklenen kovalar kaybolmaz,
 // kullanıcının girdiği değerler korunur.

@@ -135,34 +135,8 @@
       </div>
     </div>
     
-    <!-- Right Sidebar: Fixed Matrices -->
-    <div class="matrix-sidebar">
-      
-      <!-- Pasta Cila Matrix -->
-      <div>
-        <div class="matrix-section-title">✨ Pasta & Cila İşçilik (€)</div>
-        <div class="matrix-grid" id="matrixPastaCila"></div>
-      </div>
-      
-      <!-- Zehirli Boya Matrix -->
-      <div>
-        <div class="matrix-section-title">⚓ Zehirli Boya İşçilik (€)</div>
-        <div class="matrix-grid" id="matrixZehirli"></div>
-      </div>
-      
-      <!-- Ana Makina Matrix -->
-      <div>
-        <div class="matrix-section-title">⚙️ Ana Makina Periyodik Bakım İşçilik (€)</div>
-        <div class="matrix-grid" id="matrixAnaMakina"></div>
-      </div>
-      
-      <!-- Impeller Matrix -->
-      <div>
-        <div class="matrix-section-title">🔄 İmpeller Değişimi İşçilik (€)</div>
-        <div class="matrix-grid" id="matrixImpeller"></div>
-      </div>
-      
-    </div>
+    <!-- Right Sidebar: bölümler MATRIX_DEFS'ten çizilir, elle eklenmez -->
+    <div class="matrix-sidebar" id="matrixSidebar"></div>
     
   </div>
 
@@ -456,32 +430,77 @@
       el.style.borderColor = bos ? '#fb923c' : '';
       el.style.background = bos ? '#3a2718' : '';
     }
+    // Rozeti tazele. Tüm bölümü yeniden çizmiyoruz: kutu odağı kaybolurdu.
+    const rozet = document.getElementById('rozet-' + key);
+    if (rozet) {
+      const eksik = Object.values(wizPrices[key] || {}).filter(v => !oranGirilmis(v)).length;
+      rozet.innerHTML = eksik
+        ? `<span style="font-size:10px; font-weight:700; color:#fb923c; background:#3a2718; border-radius:999px; padding:1px 7px;">${eksik} eksik</span>`
+        : `<span style="font-size:10px; color:#475569;">✓</span>`;
+    }
   }
 
+  // Hangi bölümler açık. Varsayılan: eksiği olanlar açık, tamamı dolu olanlar kapalı.
+  let acikMatrisler = null;
+
+  function toggleMatris(key) {
+    acikMatrisler[key] = !acikMatrisler[key];
+    renderMatrices();
+  }
+
+  // Sidebar tamamen MATRIX_DEFS'ten çizilir. Yeni konu eklemek için buraya
+  // dokunmak gerekmez — service-data.js'teki kayıt defterine bir kayıt yeter.
   function renderMatrices() {
-    const cats = [
-      { id: 'matrixPastaCila',  key: 'pasta_cila' },
-      { id: 'matrixZehirli',    key: 'zehirli'    },
-      { id: 'matrixAnaMakina',  key: 'ana_makina' },
-      { id: 'matrixImpeller',   key: 'impeller'   }
-    ];
-    
-    cats.forEach(({id, key}) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      
-      el.innerHTML = Object.entries(wizPrices[key]).map(([bucket, price]) => {
-        // Girilmemiş oran boş kutu olarak görünür. 0 yazmak "işçilik 0 €" demek olurdu.
-        const bos = !oranGirilmis(price);
-        return `
-        <div class="matrix-item">
-          <label${bos ? ' style="color:#fb923c;"' : ''}>${bucket}${bos ? ' ⚠' : ''}</label>
-          <input type="number" value="${bos ? '' : price}" placeholder="girilmedi"
-            ${bos ? 'style="border-color:#fb923c; background:#3a2718;"' : ''}
-            oninput="setMatrixPrice('${key}', '${bucket}', this.value, this)">
-        </div>
-      `; }).join('');
-    });
+    const sidebar = document.getElementById('matrixSidebar');
+    if (!sidebar) return;
+
+    const eksikSayisi = key => Object.values(wizPrices[key] || {}).filter(v => !oranGirilmis(v)).length;
+
+    if (acikMatrisler === null) {
+      acikMatrisler = {};
+      MATRIX_DEFS.forEach(d => acikMatrisler[d.key] = eksikSayisi(d.key) > 0);
+    }
+
+    // Eksene göre grupla (HP tabloları bir arada, LOA tabloları bir arada)
+    const eksenler = [...new Set(MATRIX_DEFS.map(d => d.eksen || '—'))];
+
+    sidebar.innerHTML = eksenler.map(eksen => {
+      const defs = MATRIX_DEFS.filter(d => (d.eksen || '—') === eksen);
+      return `
+      <div style="margin-bottom:4px;">
+        <div style="font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:#475569; font-weight:700; margin-bottom:6px;">${eksen} bazlı</div>
+        ${defs.map(d => {
+          const eksik = eksikSayisi(d.key);
+          const acik = acikMatrisler[d.key];
+          return `
+          <div style="border:1px solid ${eksik ? '#7c2d12' : '#1e293b'}; border-radius:8px; margin-bottom:6px; overflow:hidden;">
+            <div onclick="toggleMatris('${d.key}')" style="display:flex; align-items:center; gap:6px; padding:8px 10px; cursor:pointer; background:${eksik ? '#2a1a10' : '#182234'}; user-select:none;">
+              <span style="color:#64748b; font-size:9px;">${acik ? '▼' : '▶'}</span>
+              <span style="font-size:12px;">${d.ikon}</span>
+              <span style="font-size:12px; font-weight:600; color:#cbd5e1; flex:1;">${d.ad}</span>
+              <span id="rozet-${d.key}">${eksik
+                ? `<span style="font-size:10px; font-weight:700; color:#fb923c; background:#3a2718; border-radius:999px; padding:1px 7px;">${eksik} eksik</span>`
+                : `<span style="font-size:10px; color:#475569;">✓</span>`}</span>
+            </div>
+            ${acik ? `<div class="matrix-grid" style="padding:10px; margin:0;">${matrisKutulari(d.key)}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('');
+  }
+
+  function matrisKutulari(key) {
+    return Object.entries(wizPrices[key] || {}).map(([bucket, price]) => {
+      // Girilmemiş oran boş kutu olarak görünür. 0 yazmak "işçilik 0 €" demek olurdu.
+      const bos = !oranGirilmis(price);
+      return `
+      <div class="matrix-item">
+        <label${bos ? ' style="color:#fb923c;"' : ''}>${bucket}${bos ? ' ⚠' : ''}</label>
+        <input type="number" value="${bos ? '' : price}" placeholder="girilmedi"
+          ${bos ? 'style="border-color:#fb923c; background:#3a2718;"' : ''}
+          oninput="setMatrixPrice('${key}', '${bucket}', this.value, this)">
+      </div>`;
+    }).join('');
   }
 
   // Save All Changes
