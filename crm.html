@@ -2029,6 +2029,10 @@ function openTalepModal(talepId, customerId) {
 
 function closeTalepModal() {
   document.getElementById('talepModalOverlay').classList.remove('open');
+  // Altta müşteri modalı açık değilse sayfa kaydırması geri gelsin
+  if (!document.getElementById('customerModalOverlay').classList.contains('open')) {
+    document.body.style.overflow = '';
+  }
   editingTalepId = null;
 }
 
