@@ -889,8 +889,8 @@
               <th>Müşteri</th>
               <th>Tekne</th>
               <th>Tür</th>
-              <th>Bütçe</th>
-              <th>İstenen Tarih</th>
+              <th>Anlaşma T.</th>
+              <th>Bitiş T.</th>
               <th>Öncelik</th>
               <th>Durum</th>
               <th>İşlem</th>
@@ -1214,19 +1214,12 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Bütçe (EUR)</label>
-          <div class="budget-row">
-            <input type="number" id="fTalepButce" placeholder="5000" min="0" oninput="updatePriorityPreview()">
-          </div>
-          <div style="margin-top:6px;">
-            <label class="budget-check" style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:600;color:var(--muted);cursor:pointer;">
-              <input type="checkbox" id="fButceBilinmiyor" onchange="updatePriorityPreview()"> Bütçe bilinmiyor
-            </label>
-          </div>
+          <label>Anlaşma Tarihi</label>
+          <input type="date" id="fTalepTarih" oninput="updatePriorityPreview()">
         </div>
         <div class="form-group">
-          <label>İstenen Tarih</label>
-          <input type="date" id="fTalepTarih" oninput="updatePriorityPreview()">
+          <label>Bitiş Tarihi</label>
+          <input type="date" id="fTalepBitisTarih" oninput="updatePriorityPreview()">
         </div>
       </div>
       <div class="form-group">
@@ -1297,16 +1290,6 @@ function calcPriorityScore(talep, musteri) {
   let score = 0;
   const breakdown = [];
 
-  // Budget (max +3)
-  if (!talep.butceBilinmiyor && talep.butce > 0) {
-    const b = Number(talep.butce);
-    if (b > 5000)      { score += 3; breakdown.push({ label: 'Bütçe >5.000€', pts: 3 }); }
-    else if (b >= 2000){ score += 2; breakdown.push({ label: 'Bütçe 2-5K€', pts: 2 }); }
-    else if (b >= 500) { score += 1; breakdown.push({ label: 'Bütçe 500-2K€', pts: 1 }); }
-    else               { breakdown.push({ label: 'Bütçe <500€', pts: 0 }); }
-  } else if (talep.butceBilinmiyor) {
-    breakdown.push({ label: 'Bütçe bilinmiyor', pts: 0 });
-  }
 
   // Date urgency (max +3)
   if (talep.istenenTarih) {
@@ -1397,9 +1380,6 @@ function renderStats() {
       if (t.durum === 'yeni' || t.durum === 'gorusmede') openRequests++;
       const { p } = calcTalepPriority(t, c);
       if ((p === 1 || p === 2) && t.durum !== 'iptal' && t.durum !== 'onaylandi') critical++;
-      if (t.durum === 'onaylandi' && !t.butceBilinmiyor && t.butce > 0) {
-        approvedRevenue += Number(t.butce);
-      }
     });
   });
 
@@ -1407,7 +1387,7 @@ function renderStats() {
   document.getElementById('statTotalBoats').textContent = totalBoats;
   document.getElementById('statOpenRequests').textContent = openRequests;
   document.getElementById('statCritical').textContent = critical;
-  document.getElementById('statRevenue').textContent = '€' + approvedRevenue.toLocaleString('tr-TR');
+  document.getElementById('statRevenue').textContent = '—';
 
   const sezon = getSezonInfo();
   document.getElementById('statSezon').textContent = sezon.label;
@@ -1734,8 +1714,6 @@ function renderRequestTable() {
       `<option value="${v}" ${t.durum === v ? 'selected' : ''}>${l}</option>`
     ).join('');
 
-    const budgetText = t.butceBilinmiyor ? '—' : (t.butce ? `€${Number(t.butce).toLocaleString('tr-TR')}` : '—');
-
     return `<tr class="clickable-row" onclick="viewCustomer('${c.id}')">
       <td class="text-no-wrap">${formatDateShort(t.createdAt)}</td>
       <td>
@@ -1747,8 +1725,8 @@ function renderRequestTable() {
         ${c.tekneBoyu ? `<div class="text-muted">${c.tekneBoyu} ft</div>` : ''}
       </td>
       <td>${TUR_LABEL[t.tur] || t.tur}</td>
-      <td class="text-no-wrap">${budgetText}</td>
-      <td class="text-no-wrap">${formatDate(t.istenenTarih)}</td>
+      <td class="text-no-wrap">${t.istenenTarih ? formatDate(t.istenenTarih) : '—'}</td>
+      <td class="text-no-wrap">${t.bitisTarihi ? formatDate(t.bitisTarihi) : '—'}</td>
       <td>${pBadge(p)}</td>
       <td onclick="event.stopPropagation()">
         <select class="status-select" onchange="updateTalepDurum('${c.id}','${t.id}',this.value)">
@@ -1987,8 +1965,8 @@ function renderTaleplerTab(customer) {
         <div class="talep-item-title">${TUR_LABEL[t.tur] || t.tur} ${KANAL_LABEL[t.kanal] || ''}</div>
         <div class="talep-item-meta">
           ${formatDateShort(t.createdAt)} · ${durumBadge(t.durum)}
-          ${t.butceBilinmiyor ? ' · Bütçe bilinmiyor' : (t.butce ? ` · €${Number(t.butce).toLocaleString('tr-TR')}` : '')}
-          ${t.istenenTarih ? ` · İstenen: ${formatDate(t.istenenTarih)}` : ''}
+          ${t.istenenTarih ? ` · Anlaşma: ${formatDate(t.istenenTarih)}` : ''}
+          ${t.bitisTarihi ? ` · Bitiş: ${formatDate(t.bitisTarihi)}` : ''}
         </div>
         ${t.aciklama ? `<div class="talep-item-meta" style="margin-top:3px;">${esc(t.aciklama.slice(0, 80))}${t.aciklama.length > 80 ? '…' : ''}</div>` : ''}
       </div>
@@ -2041,9 +2019,8 @@ function clearTalepForm() {
   document.getElementById('fTalepTur').value = 'bakim';
   document.getElementById('fTalepDurum').value = 'yeni';
   document.getElementById('fTalepAciklama').value = '';
-  document.getElementById('fTalepButce').value = '';
-  document.getElementById('fButceBilinmiyor').checked = false;
-  document.getElementById('fTalepTarih').value = '';
+  document.getElementById('fTalepTarih').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fTalepBitisTarih').value = '';
   document.getElementById('fTalepNotlar').value = '';
 }
 
@@ -2053,9 +2030,8 @@ function fillTalepForm(t) {
   document.getElementById('fTalepTur').value = t.tur || 'bakim';
   document.getElementById('fTalepDurum').value = t.durum || 'yeni';
   document.getElementById('fTalepAciklama').value = t.aciklama || '';
-  document.getElementById('fTalepButce').value = t.butce || '';
-  document.getElementById('fButceBilinmiyor').checked = !!t.butceBilinmiyor;
   document.getElementById('fTalepTarih').value = t.istenenTarih || '';
+  document.getElementById('fTalepBitisTarih').value = t.bitisTarihi || '';
   document.getElementById('fTalepNotlar').value = t.notlar || '';
 }
 
@@ -2063,8 +2039,6 @@ function saveTalep() {
   if (!currentCustomerForTalep) { alert('Müşteri seçilmedi.'); return; }
 
   const kanalEl = document.querySelector('input[name="talepKanal"]:checked');
-  const butceBilinmiyor = document.getElementById('fButceBilinmiyor').checked;
-  const butce = butceBilinmiyor ? 0 : (parseFloat(document.getElementById('fTalepButce').value) || 0);
 
   const customers = loadData();
   const idx = customers.findIndex(c => c.id === currentCustomerForTalep);
@@ -2075,9 +2049,8 @@ function saveTalep() {
     kanal: kanalEl ? kanalEl.value : 'telefon',
     tur: document.getElementById('fTalepTur').value,
     aciklama: document.getElementById('fTalepAciklama').value.trim(),
-    butce,
-    butceBilinmiyor,
     istenenTarih: document.getElementById('fTalepTarih').value,
+    bitisTarihi: document.getElementById('fTalepBitisTarih').value,
     durum: document.getElementById('fTalepDurum').value,
     notlar: document.getElementById('fTalepNotlar').value.trim()
   };
@@ -2174,8 +2147,6 @@ function updateTalepDurum(customerId, talepId, newDurum) {
 
 // ── Priority Preview ──────────────────────────────────────────
 function updatePriorityPreview() {
-  const butceBilinmiyor = document.getElementById('fButceBilinmiyor').checked;
-  const butce = butceBilinmiyor ? 0 : (parseFloat(document.getElementById('fTalepButce').value) || 0);
   const tur = document.getElementById('fTalepTur').value;
   const tarih = document.getElementById('fTalepTarih').value;
 
@@ -2186,7 +2157,7 @@ function updatePriorityPreview() {
     musteri = customers.find(c => c.id === currentCustomerForTalep) || null;
   }
 
-  const fakeTalep = { butce, butceBilinmiyor, tur, istenenTarih: tarih };
+  const fakeTalep = { tur, istenenTarih: tarih };
   const { score, breakdown, p } = calcTalepPriority(fakeTalep, musteri);
 
   const pColors = { 1: '#e53935', 2: '#f57c00', 3: '#1565a7', 4: '#607d8b' };

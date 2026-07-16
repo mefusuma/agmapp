@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teklif Otomasyon Ayarları</title>
+<script src="service-data.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #0f172a; color: #f8fafc; font-size: 14px; min-height: 100vh; display: flex; flex-direction: column; }
+  
+  /* Topbar */
+  .topbar { background: linear-gradient(135deg, #0f2438 0%, #1273b8 100%); color: #fff; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e3a5f; }
+  .topbar h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
+  .topbar .sub { font-size: 11px; color: #7da3c0; margin-top: 2px; }
+  
+  .btn { border: none; border-radius: 7px; padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-ghost { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.2); }
+  .btn-primary { background: #0ea5e9; color: #fff; }
+  .btn-primary:hover { background: #0284c7; }
+  .btn-green { background: #10b981; color: #fff; }
+  .btn-green:hover { background: #059669; }
+  .btn-danger { background: #ef4444; color: #fff; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-sm { padding: 4px 8px; font-size: 11px; border-radius: 4px; }
+  
+  /* Layout */
+  .main-layout { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 60px); }
+  
+  /* Left Sidebar: Engine Tree */
+  .sidebar { width: 260px; border-right: 1px solid #1e293b; background: #1e293b; display: flex; flex-direction: column; overflow-y: auto; }
+  .sidebar-header { padding: 16px; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
+  .sidebar-header h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
+  
+  .tree-list { padding: 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .tree-item-group { border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 6px; }
+  
+  .tree-model-row { display: flex; align-items: center; padding: 8px 12px; justify-content: space-between; font-weight: 600; font-size: 13px; color: #e2e8f0; cursor: pointer; transition: background 0.2s; }
+  .tree-model-row:hover { background: rgba(255,255,255,0.05); }
+  .tree-model-row.active { background: rgba(14, 165, 233, 0.15); border-left: 3px solid #0ea5e9; }
+  
+  .tree-intervals { padding-left: 16px; display: flex; flex-direction: column; gap: 2px; background: rgba(0,0,0,0.15); border-top: 1px solid rgba(255,255,255,0.02); }
+  .tree-interval-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px 6px 8px; font-size: 12.5px; color: #94a3b8; cursor: pointer; transition: all 0.2s; border-radius: 4px; margin: 2px 4px; }
+  .tree-interval-row:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .tree-interval-row.active { background: #0ea5e9; color: #fff; font-weight: 600; }
+  
+  .action-icon { background: none; border: none; color: #64748b; font-size: 13px; cursor: pointer; padding: 2px; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+  .action-icon:hover { color: #f8fafc; background: rgba(255,255,255,0.1); }
+  
+  /* Center Area: Parts List */
+  .workspace { flex: 1; padding: 24px; overflow-y: auto; background: #0f172a; display: flex; flex-direction: column; gap: 20px; }
+  .card { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #334155; padding-bottom: 12px; }
+  .card-header h2 { font-size: 16px; font-weight: 600; color: #f8fafc; }
+  
+  table { width: 100%; border-collapse: collapse; text-align: left; }
+  th { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 600; padding: 10px 8px; border-bottom: 2px solid #334155; }
+  td { padding: 8px; border-bottom: 1px solid #334155; vertical-align: middle; }
+  
+  input, select { background: #0f172a; border: 1px solid #475569; color: #f8fafc; padding: 6px 10px; border-radius: 6px; font-size: 13px; width: 100%; transition: border-color 0.2s; }
+  input:focus, select:focus { outline: none; border-color: #0ea5e9; }
+  
+  /* Right Sidebar: Matrices */
+  .matrix-sidebar { width: 320px; border-left: 1px solid #1e293b; background: #1e293b; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+  .matrix-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .matrix-item { display: flex; flex-direction: column; gap: 4px; }
+  .matrix-item label { font-size: 11px; color: #cbd5e1; }
+  
+  .toast { position: fixed; bottom: 20px; right: 20px; background: #10b981; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 500; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: none; z-index: 999; }
+</style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div>
+      <h1>⚙️ Otomasyon Kuralları Yönetimi</h1>
+      <div class="sub">Otomatik Teklif Sihirbazının motor, saat ve matris fiyat ayarları</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-ghost" onclick="exportConfig()">📥 Ayarları Yedekle (JSON)</button>
+      <input type="file" id="importConfigInput" accept=".json" style="display:none;" onchange="importConfig(event)">
+      <button class="btn btn-ghost" onclick="document.getElementById('importConfigInput').click()">📤 Yedekten Yükle</button>
+      <button class="btn btn-green" onclick="saveAll()">💾 Ayarları Kaydet</button>
+      <button class="btn btn-primary" onclick="goBack()">🏠 Atölyeye Dön</button>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <div class="main-layout">
+  
+    <!-- Left Sidebar: Models & Intervals -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>Motor Modelleri</h3>
+        <button class="btn btn-primary btn-sm" onclick="addModel()">+ Ekle</button>
+      </div>
+      <div class="tree-list" id="treeList">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+    
+    <!-- Center Area: Parts List -->
+    <div class="workspace">
+      <div class="card" id="partsCard" style="display:none;">
+        <div class="card-header">
+          <h2 id="workspaceTitle">Seçili Bakım Parçaları</h2>
+          <button class="btn btn-primary btn-sm" onclick="addPartRow()">+ Yeni Parça Ekle</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 140px;">Parça No</th>
+                <th>Açıklama</th>
+                <th style="width: 80px; text-align: center;">Miktar</th>
+                <th style="width: 100px; text-align: right;">Birim Fiyat (€)</th>
+                <th style="width: 50px; text-align: center;">Sil</th>
+              </tr>
+            </thead>
+            <tbody id="partsTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div id="welcomeScreen" style="display:flex; flex:1; flex-direction:column; align-items:center; justify-content:center; color:#64748b; border: 2px dashed #334155; border-radius:12px; padding:40px;">
+        <span style="font-size:48px; margin-bottom:16px;">⚙️</span>
+        <h3>Otomasyon Editörüne Hoş Geldiniz</h3>
+        <p style="margin-top:8px; font-size:12.5px; text-align:center; max-width:400px;">Soldaki menüden düzenlemek istediğiniz motor modelini ve bakım saatini seçin veya sağ panelden işçilik fiyat matrislerini güncelleyin.</p>
+      </div>
+    </div>
+    
+    <!-- Right Sidebar: Fixed Matrices -->
+    <div class="matrix-sidebar">
+      
+      <!-- Pasta Cila Matrix -->
+      <div>
+        <div class="matrix-section-title">✨ Pasta & Cila İşçilik (€)</div>
+        <div class="matrix-grid" id="matrixPastaCila"></div>
+      </div>
+      
+      <!-- Zehirli Boya Matrix -->
+      <div>
+        <div class="matrix-section-title">⚓ Zehirli Boya İşçilik (€)</div>
+        <div class="matrix-grid" id="matrixZehirli"></div>
+      </div>
+      
+      <!-- Ana Makina Matrix -->
+      <div>
+        <div class="matrix-section-title">⚙️ Ana Makina Periyodik Bakım İşçilik (€)</div>
+        <div class="matrix-grid" id="matrixAnaMakina"></div>
+      </div>
+      
+      <!-- Impeller Matrix -->
+      <div>
+        <div class="matrix-section-title">🔄 İmpeller Değişimi İşçilik (€)</div>
+        <div class="matrix-grid" id="matrixImpeller"></div>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  <div class="toast" id="toast">Aksiyon Başarılı</div>
+
+<script>
+  let autData = null;
+  let wizPrices = null;
+  
+  let activeModel = null;
+  let activeInterval = null;
+  
+  // Default values
+  const DEFAULT_MATRICES = {
+    ana_makina: {"10-30 HP":280,"40-55 HP":380,"56-75 HP":460,"76-110 HP":560,"111-150 HP":650,"151-230 HP":780,"231-350 HP":950},
+    impeller:   {"10-30 HP":60, "40-55 HP":80, "56-75 HP":90, "76-110 HP":110,"111-150 HP":130,"151-230 HP":160,"231-350 HP":200},
+    pasta_cila: {"≤25 ft":100,"26-30 ft":150,"31-35 ft":250,"36-40 ft":350,"41-45 ft":450,"46-50 ft":550,"51-55 ft":650,"56-60 ft":800},
+    zehirli:    {"≤25 ft":170,"26-30 ft":250,"31-35 ft":280,"36-40 ft":350,"41-45 ft":450,"46-50 ft":550,"51-55 ft":650,"56-60 ft":800}
+  };
+
+  // Load configuration
+  function init() {
+    // Load rules
+    const savedRules = localStorage.getItem('service_automation_rules');
+    if (savedRules) {
+      try { autData = JSON.parse(savedRules); } catch(e) {}
+    }
+    if (!autData) {
+      autData = typeof SERVICE_AUTOMATION_DATA !== 'undefined' ? JSON.parse(JSON.stringify(SERVICE_AUTOMATION_DATA)) : { schedules: {}, engineParts: {} };
+    }
+    
+    // Load matrices
+    const savedPrices = localStorage.getItem('wiz_prices');
+    if (savedPrices) {
+      try { wizPrices = JSON.parse(savedPrices); } catch(e) {}
+    }
+    if (!wizPrices) {
+      wizPrices = JSON.parse(JSON.stringify(DEFAULT_MATRICES));
+    } else {
+      // Merge keys just in case
+      for (let k in DEFAULT_MATRICES) {
+        if (!wizPrices[k]) wizPrices[k] = { ...DEFAULT_MATRICES[k] };
+        else wizPrices[k] = { ...DEFAULT_MATRICES[k], ...wizPrices[k] };
+      }
+    }
+    
+    renderTree();
+    renderMatrices();
+  }
+
+  function toast(msg, type = "success") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.style.background = type === "success" ? "#10b981" : "#ef4444";
+    t.style.display = "block";
+    clearTimeout(t._h);
+    t._h = setTimeout(() => t.style.display = "none", 2200);
+  }
+
+  // Go Back
+  function goBack() {
+    window.location.href = 'teklif.html';
+  }
+
+  // Render Models & Intervals Tree
+  function renderTree() {
+    const tree = document.getElementById('treeList');
+    if (!autData || !autData.engineParts) return;
+    
+    const models = Object.keys(autData.engineParts).sort();
+    tree.innerHTML = models.map(model => {
+      const isModelActive = activeModel === model;
+      const intervals = Object.keys(autData.engineParts[model] || {})
+        .map(k => k.replace('interval_', ''))
+        .sort((a,b) => parseInt(a) - parseInt(b));
+        
+      return `
+        <div class="tree-item-group">
+          <div class="tree-model-row ${isModelActive && !activeInterval ? 'active' : ''}" onclick="selectModel('${model}')">
+            <span>⚙️ ${model}</span>
+            <div style="display:flex; gap:6px;" onclick="event.stopPropagation();">
+              <button class="action-icon" onclick="addInterval('${model}')" title="Bakım Saati Ekle">＋</button>
+              <button class="action-icon" onclick="deleteModel('${model}')" title="Modeli Sil">✕</button>
+            </div>
+          </div>
+          <div class="tree-intervals">
+            ${intervals.map(int => {
+              const isIntActive = isModelActive && activeInterval === int;
+              return `
+                <div class="tree-interval-row ${isIntActive ? 'active' : ''}" onclick="selectInterval('${model}', '${int}')">
+                  <span>⏱️ ${int} Saat Bakımı</span>
+                  <button class="action-icon" onclick="event.stopPropagation(); deleteInterval('${model}', '${int}')" title="Bakımı Sil">✕</button>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Model & Interval Selection
+  function selectModel(model) {
+    activeModel = model;
+    activeInterval = null;
+    renderTree();
+    showWelcomeScreen();
+  }
+
+  function selectInterval(model, interval) {
+    activeModel = model;
+    activeInterval = interval;
+    renderTree();
+    showPartsWorkspace();
+  }
+
+  function showWelcomeScreen() {
+    document.getElementById('partsCard').style.display = 'none';
+    document.getElementById('welcomeScreen').style.display = 'flex';
+  }
+
+  function showPartsWorkspace() {
+    document.getElementById('welcomeScreen').style.display = 'none';
+    document.getElementById('partsCard').style.display = 'block';
+    document.getElementById('workspaceTitle').textContent = `⚙️ ${engineBrandLabel(activeModel)} - ${activeInterval} Saat Bakım Parçaları`;
+    renderParts();
+  }
+
+  // Render Parts table for selected model + interval
+  function renderParts() {
+    const tbody = document.getElementById('partsTableBody');
+    if (!activeModel || !activeInterval) return;
+    
+    const key = `interval_${activeInterval}`;
+    const parts = autData.engineParts[activeModel]?.[key] || [];
+    
+    tbody.innerHTML = parts.map((p, idx) => `
+      <tr>
+        <td>
+          <input value="${p.partNumber || ''}" placeholder="Parça No" onchange="updatePartField(${idx}, 'partNumber', this.value)">
+        </td>
+        <td>
+          <input value="${p.description || ''}" placeholder="Açıklama" onchange="updatePartField(${idx}, 'description', this.value)">
+        </td>
+        <td style="text-align:center;">
+          <input type="number" value="${p.quantity || 1}" style="text-align:center;" onchange="updatePartField(${idx}, 'quantity', parseInt(this.value)||1)">
+        </td>
+        <td style="text-align:right;">
+          <input type="number" step="0.01" value="${p.price || 0}" style="text-align:right;" onchange="updatePartField(${idx}, 'price', parseFloat(this.value)||0)">
+        </td>
+        <td style="text-align:center;">
+          <button class="btn btn-danger btn-sm" onclick="deletePartRow(${idx})">✕</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function updatePartField(idx, field, val) {
+    const key = `interval_${activeInterval}`;
+    if (autData.engineParts[activeModel]?.[key]?.[idx]) {
+      autData.engineParts[activeModel][key][idx][field] = val;
+    }
+  }
+
+  function addPartRow() {
+    const key = `interval_${activeInterval}`;
+    if (!autData.engineParts[activeModel]) autData.engineParts[activeModel] = {};
+    if (!autData.engineParts[activeModel][key]) autData.engineParts[activeModel][key] = [];
+    
+    autData.engineParts[activeModel][key].push({
+      partNumber: '',
+      description: 'Yeni Parça',
+      quantity: 1,
+      price: 0
+    });
+    
+    renderParts();
+  }
+
+  function deletePartRow(idx) {
+    const key = `interval_${activeInterval}`;
+    if (autData.engineParts[activeModel]?.[key]) {
+      autData.engineParts[activeModel][key].splice(idx, 1);
+      renderParts();
+    }
+  }
+
+  // Model Operations
+  function addModel() {
+    const name = prompt("Yeni Motor Modelinin adını girin (Örn: D2-40):");
+    if (!name) return;
+    const cleanName = name.trim().toUpperCase();
+    if (!cleanName) return;
+    
+    if (autData.engineParts[cleanName]) {
+      toast("Bu model zaten mevcut!", "error");
+      return;
+    }
+    
+    autData.engineParts[cleanName] = {};
+    activeModel = cleanName;
+    activeInterval = null;
+    renderTree();
+    showWelcomeScreen();
+    toast("Motor modeli başarıyla eklendi.");
+  }
+
+  function deleteModel(model) {
+    if (!confirm(`${engineBrandLabel(model)} motor modelini ve bu modele ait tüm bakım tanımlarını silmek istediğinize emin misiniz?`)) return;
+    delete autData.engineParts[model];
+    if (activeModel === model) {
+      activeModel = null;
+      activeInterval = null;
+    }
+    renderTree();
+    showWelcomeScreen();
+    toast("Motor modeli silindi.");
+  }
+
+  // Interval Operations
+  function addInterval(model) {
+    const val = prompt("Yeni Bakım Saatini girin (Örn: 100, 250, 500):");
+    if (!val) return;
+    const cleanVal = parseInt(val);
+    if (isNaN(cleanVal) || cleanVal <= 0) {
+      toast("Lütfen geçerli bir saat sayısı girin!", "error");
+      return;
+    }
+    
+    const key = `interval_${cleanVal}`;
+    if (!autData.engineParts[model]) autData.engineParts[model] = {};
+    if (autData.engineParts[model][key]) {
+      toast("Bu bakım saati zaten tanımlı!", "error");
+      return;
+    }
+    
+    autData.engineParts[model][key] = [];
+    activeModel = model;
+    activeInterval = String(cleanVal);
+    renderTree();
+    showPartsWorkspace();
+    toast("Bakım saati eklendi.");
+  }
+
+  function deleteInterval(model, interval) {
+    if (!confirm(`${model} modeli için ${interval} saat bakımını silmek istediğinize emin misiniz?`)) return;
+    const key = `interval_${interval}`;
+    delete autData.engineParts[model][key];
+    if (activeModel === model && activeInterval === interval) {
+      activeInterval = null;
+      showWelcomeScreen();
+    }
+    renderTree();
+    toast("Bakım saati silindi.");
+  }
+
+  // Render Price Matrices inside Right Sidebar
+  function renderMatrices() {
+    const cats = [
+      { id: 'matrixPastaCila',  key: 'pasta_cila' },
+      { id: 'matrixZehirli',    key: 'zehirli'    },
+      { id: 'matrixAnaMakina',  key: 'ana_makina' },
+      { id: 'matrixImpeller',   key: 'impeller'   }
+    ];
+    
+    cats.forEach(({id, key}) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      
+      el.innerHTML = Object.entries(wizPrices[key]).map(([bucket, price]) => `
+        <div class="matrix-item">
+          <label>${bucket}</label>
+          <input type="number" value="${price}" oninput="wizPrices['${key}']['${bucket}']=parseFloat(this.value)||0;">
+        </div>
+      `).join('');
+    });
+  }
+
+  // Save All Changes
+  function saveAll() {
+    try {
+      localStorage.setItem('service_automation_rules', JSON.stringify(autData));
+      localStorage.setItem('wiz_prices', JSON.stringify(wizPrices));
+      toast("Tüm otomasyon ve fiyat ayarları başarıyla kaydedildi!");
+    } catch(e) {
+      toast("Kaydedilirken hata oluştu: " + e.message, "error");
+    }
+  }
+
+  // Backup Config
+  function exportConfig() {
+    const backupObj = {
+      rules: autData,
+      prices: wizPrices
+    };
+    const blob = new Blob([JSON.stringify(backupObj, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "marine_suite_otomasyon_yedek.json";
+    a.click();
+    toast("Yedek dosyası indirildi.");
+  }
+
+  // Import Backup Config
+  function importConfig(e) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    
+    f.text().then(text => {
+      try {
+        const data = JSON.parse(text);
+        if (data.rules && data.prices) {
+          autData = data.rules;
+          wizPrices = data.prices;
+          
+          activeModel = null;
+          activeInterval = null;
+          
+          renderTree();
+          renderMatrices();
+          showWelcomeScreen();
+          
+          toast("Ayarlar yedek dosyasından başarıyla yüklendi!");
+        } else {
+          toast("Hatalı yedek dosyası formatı!", "error");
+        }
+      } catch(err) {
+        toast("JSON dosyası ayrıştırılamadı!", "error");
+      }
+    });
+    
+    e.target.value = ""; // Reset
+  }
+
+  // Initialize
+  init();
+</script>
+</body>
+</html>

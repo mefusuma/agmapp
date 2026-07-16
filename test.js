@@ -1,459 +1,4 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teklif Atölyesi</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-<script src="service-data.js"></script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #eef1f4; color: #1e293b; font-size: 14px; }
-  .topbar { background: #0f2438; color: #fff; padding: 10px 16px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 20; }
-  .topbar h1 { font-size: 15px; letter-spacing: 0.08em; font-weight: 600; }
-  .topbar .sub { font-size: 11px; color: #7da3c0; }
-  .page-tabs { display: flex; gap: 4px; }
-  .page-tab-btn { background: transparent; border: none; color: #b8c9d9; padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-  .page-tab-btn.active { background: #1273b8; color: #fff; }
-  .page-tab-btn:hover:not(.active) { background: #1b3a55; }
-  /* Teklif Sekmeleri (tarayıcı tab tarzı) */
-  .quote-tabs-bar { background: #0a1c2e; padding: 6px 16px 0; display: flex; align-items: flex-end; gap: 3px; overflow-x: auto; position: sticky; top: 56px; z-index: 19; }
-  .quote-tab { display: flex; align-items: center; gap: 6px; padding: 9px 14px 9px 12px; border-radius: 8px 8px 0 0; background: #162d46; color: #64748b; font-size: 13px; cursor: pointer; border: 1px solid #1e3a55; border-bottom: 3px solid transparent; white-space: nowrap; max-width: 220px; transition: all 0.15s; user-select: none; }
-  .quote-tab.active { background: #1273b8; color: #fff; font-weight: 700; border-color: #1273b8; border-bottom-color: #1273b8; box-shadow: 0 -2px 8px rgba(18,115,184,0.4); transform: translateY(-2px); }
-  .quote-tab:hover:not(.active) { background: #1e3d60; color: #cbd5e1; border-color: #2c4a66; }
-  .quote-tab .tab-label { overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
-  .quote-tab .tab-close { background: none; border: none; color: inherit; opacity: 0.6; font-size: 15px; line-height: 1; padding: 0 0 0 6px; cursor: pointer; flex-shrink: 0; border-radius: 3px; }
-  .quote-tab .tab-close:hover { opacity: 1; color: #fca5a5; background: rgba(239,68,68,0.15); }
-  .quote-tab.active .tab-close { opacity: 0.75; }
-  .quote-tab.active .tab-close:hover { color: #fca5a5; }
-  .quote-tab-add { background: none; border: 1px solid #2c4a66; color: #64748b; font-size: 18px; padding: 6px 12px; cursor: pointer; border-radius: 6px 6px 0 0; line-height: 1; margin-left: 4px; transition: 0.15s; }
-  .quote-tab-add:hover { background: #1273b8; color: #fff; border-color: #1273b8; }
-  .quote-tab.dragging { opacity: 0.4; border: 2px dashed #38bdf8; }
-  .quote-tab.drag-over { border-left: 3px solid #38bdf8; background: #1e3d60; }
-  .wrap { padding: 16px; max-width: 900px; margin: 0 auto; }
-  .card { background: #fff; border: 1px solid #dbe2ea; border-radius: 10px; padding: 14px; }
-  .card + .card { margin-top: 14px; }
-  .card h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 10px; }
-  input, select, textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 10px; font-size: 14px; font-family: inherit; background: #fff; color: #1e293b; }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: #1273b8; }
-  textarea { resize: none; min-height: 54px; overflow: hidden; box-sizing: border-box; }
-  .red-notes { color: #dc2626; margin-top: 8px; font-weight: 500; }
-  .red-notes::placeholder { color: #94a3b8; font-weight: 400; }
-  button { cursor: pointer; font-family: inherit; }
-  .btn { border: none; border-radius: 7px; padding: 9px 14px; font-size: 13px; font-weight: 500; }
-  .btn-primary { background: #1273b8; color: #fff; } .btn-primary:hover { background: #0e5d95; }
-  .btn-green { background: #1a8a5a; color: #fff; } .btn-green:hover { background: #147349; }
-  .btn-ghost { background: #fff; border: 1px solid #cbd5e1; color: #334155; } .btn-ghost:hover { background: #f1f5f9; }
-  .btn-sm { padding: 6px 10px; font-size: 12px; }
-  .cust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  @media (max-width: 700px) { .cust-grid { grid-template-columns: 1fr 1fr; } }
-  .field label { display: block; font-size: 11px; color: #64748b; margin-bottom: 3px; }
-  .svc { border: 1px solid #dbe2ea; border-left: 4px solid #1273b8; border-radius: 10px; background: #fff; padding: 12px 14px; margin-bottom: 12px; }
-  .svc-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .svc-no { font-weight: 700; color: #b91c1c; font-size: 15px; white-space: nowrap; }
-  .svc-head input { font-weight: 600; }
-  .rows-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin: 12px 0 4px; display: flex; align-items: center; gap: 6px; }
-  .rows-title .sum { margin-left: auto; font-variant-numeric: tabular-nums; color: #334155; text-transform: none; letter-spacing: 0; }
-  .row-line { display: grid; grid-template-columns: 24px 110px 1fr 54px 60px 84px 84px 26px; gap: 6px; align-items: center; padding: 3px 0; border: 1px solid transparent; border-radius: 4px; transition: border 0.2s, background 0.2s; }
-  .row-line.dragging { opacity: 0.5; background: #e0f2fe; border: 1px dashed #38bdf8; }
-  .row-line.drag-over { border-top: 2px solid #38bdf8; }
-  .row-line[draggable="true"] { cursor: grab; }
-  .row-line[draggable="true"]:active { cursor: grabbing; }
-  @media (max-width: 620px) { .row-line { grid-template-columns: 20px 80px 1fr 44px 50px 70px 70px 22px; } .row-line input { padding: 7px 6px; font-size: 13px; } }
-  .row-line .sub { text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
-  .row-line .del, .row-line .opt-btn { background: none; border: none; font-size: 14px; cursor: pointer; }
-  .row-line .del { color: #cbd5e1; font-size: 15px; }
-  .row-line .del:hover { color: #dc2626; }
-  .row-line input.noprice { background: #fff8c4; }
-  .row-line.is-opt1 input { background: #eafbf1; border-color: #a7f3d0; color: #065f46; }
-  .row-line.is-opt2 input { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-  .svc-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
-  .dot.i { background: #1273b8; } .dot.m { background: #d97706; }
-  .summary { background: #0f2438; color: #fff; border-radius: 10px; padding: 16px; margin-top: 14px; }
-  .sum-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: #b8c9d9; }
-  .sum-row.grand { border-top: 1px solid #2c4a66; margin-top: 6px; padding-top: 10px; color: #fff; font-weight: 600; font-size: 15px; }
-  .sum-row span:last-child { font-variant-numeric: tabular-nums; }
-  .summary .actions { display: flex; gap: 8px; margin-top: 14px; }
-  .summary .actions .btn { flex: 1; }
-  .overlay { position: fixed; inset: 0; background: rgba(15, 36, 56, .55); z-index: 40; display: none; }
-  .overlay.open { display: block; }
-  .picker { position: fixed; z-index: 50; background: #fff; display: none; flex-direction: column;
-    left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(680px, 94vw); height: min(640px, 88vh);
-    border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.3); overflow: hidden; }
-  .picker.open { display: flex; }
-  @media (max-width: 620px) { .picker { width: 100vw; height: 100vh; max-height: 100vh; left: 0; top: 0; transform: none; border-radius: 0; } }
-  .picker-head { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
-  .picker-head b { font-size: 14px; }
-  .picker-head .target { font-size: 12px; color: #64748b; }
-  .picker-close { margin-left: auto; background: #f1f5f9; border: none; border-radius: 8px; width: 32px; height: 32px; font-size: 15px; color: #334155; }
-  .picker-search { padding: 10px 16px 0; }
-  .cat-chips { display: flex; gap: 6px; padding: 10px 16px; overflow-x: auto; flex-shrink: 0; }
-  .chip { border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 999px; padding: 6px 12px; font-size: 12px; white-space: nowrap; }
-  .chip.active { background: #1273b8; border-color: #1273b8; color: #fff; }
-  .picker-body { overflow-y: auto; padding: 4px 16px 20px; flex: 1; }
-  .grp { margin-top: 14px; }
-  .grp-name { font-weight: 600; font-size: 13.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 7px; }
-  .grp-cat { font-size: 11px; color: #94a3b8; font-weight: 400; }
-  .var-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .var-chip { border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 8px; padding: 8px 11px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
-  .var-chip:hover { background: #eaf4fb; border-color: #1273b8; }
-  .var-chip .p { color: #0e5d95; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .var-chip .p.zero { color: #b45309; }
-  .var-chip.added { background: #d9f2e5; border-color: #1a8a5a; }
-  .single-item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; padding: 9px 11px; font-size: 13px; margin-top: 6px; }
-  .single-item:hover { background: #eaf4fb; border-color: #1273b8; }
-  .single-item .p { margin-left: auto; color: #0e5d95; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .single-item .p.zero { color: #b45309; }
-  .single-item.added { background: #d9f2e5; border-color: #1a8a5a; }
-  .picker-count { padding: 8px 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; display: flex; align-items: center; }
-  .picker-count .btn { margin-left: auto; }
-  .empty { color: #94a3b8; text-align: center; padding: 24px 6px; font-size: 13px; }
-  .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-  @media (max-width: 700px) { .map-grid { grid-template-columns: 1fr; } }
-  .db-cat { display: flex; align-items: center; gap: 8px; padding: 7px 2px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-  .db-cat .n { margin-left: auto; color: #64748b; font-size: 12px; }
-  .toast { position: fixed; top: 16px; right: 16px; background: #0f2438; color: #fff; padding: 9px 18px; border-radius: 8px; font-size: 13px; z-index: 999; box-shadow: 0 6px 20px rgba(0,0,0,.25); display: none; }
-  .hidden { display: none !important; }
-  .note { font-size: 12px; color: #64748b; line-height: 1.5; }
-  .draft-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px; cursor: pointer; }
-  .draft-item:hover { background: #f8fafc; }
-  .catalog-modal { position: fixed; z-index: 50; background: #fff; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(500px, 94vw); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.3); display: none; }
-  .catalog-modal.open { display: block; }
-  #wizardModal.open { display: flex; }
-  .modal-header { padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; }
-  .catalog-list { padding: 16px; max-height: 70vh; overflow-y: auto; }
-</style>
-</head>
-<body>
 
-<div class="topbar">
-  <a href="index.html" class="btn btn-ghost btn-sm" style="text-decoration:none; color:#b8c9d9; margin-right:8px; display:flex; align-items:center; gap:6px;">🏠 <span style="font-size:12px;">Ana Sayfa</span></a>
-  <div style="border-left:1px solid #2c4a66; padding-left:12px;">
-    <h1>🛠️ TEKLİF ATÖLYESİ</h1>
-    <div class="sub">Afina formatında Excel Çıktısı</div>
-  </div>
-  <div style="display:flex; gap:8px; align-items:center; margin-left:auto; flex-wrap:wrap;">
-    <button class="btn btn-ghost btn-sm" onclick="undo()" title="Geri Al (Ctrl+Z)" style="padding:6px 8px; font-size:14px">↩</button>
-    <button class="btn btn-ghost btn-sm" onclick="redo()" title="İleri Al (Ctrl+Y)" style="padding:6px 8px; font-size:14px">↪</button>
-    <div style="width:1px; height:24px; background:#2c4a66; margin:0 4px;"></div>
-    <button class="btn btn-primary btn-sm" style="background:#0ea5e9" onclick="saveDraft()">💾 Kaydet</button>
-    <button class="btn btn-ghost btn-sm" onclick="openDrafts()">📂 Taslaklar</button>
-    <a href="otomasyon.html" class="btn btn-ghost btn-sm" style="text-decoration:none; color:#b8c9d9; display:inline-flex; align-items:center; gap:4px;">⚙️ Otomasyon Ayarları</a>
-    <input type="file" id="importFile" accept=".xlsx" style="display:none" onchange="importXlsx(event)">
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">📥 İçeri Aktar</button>
-    <button class="btn btn-primary btn-sm" onclick="openCrmModal()" style="background:#f59e0b; position:relative;">📥 CRM'den Çek<span id="crmBadge" style="display:none; position:absolute; top:-7px; right:-7px; background:#ef4444; color:#fff; border-radius:999px; min-width:18px; height:18px; line-height:18px; font-size:11px; font-weight:700; text-align:center; padding:0 4px; box-shadow:0 1px 4px rgba(0,0,0,.35);"></span></button>
-  </div>
-  <div class="page-tabs">
-    <button class="page-tab-btn active" data-tab="teklif" onclick="showTab('teklif')">Teklif</button>
-    <button class="page-tab-btn" data-tab="veri" onclick="showTab('veri')">Katalog</button>
-  </div>
-</div>
-
-<div class="quote-tabs-bar" id="quoteTabsBar">
-  <!-- Sekme butonları JS ile render edilecek -->
-  <button class="quote-tab-add" onclick="addTab()" title="Yeni Teklif Aç">+</button>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<div class="wrap" id="tab-teklif">
-  <div class="card">
-    <h3>Müşteri bilgileri</h3>
-    <div class="cust-grid">
-      <div class="field"><label>Müşteri adı</label><input data-cust="name"></div>
-      <div class="field"><label>E-posta</label><input data-cust="email"></div>
-      <div class="field"><label>Telefon</label><input data-cust="phone"></div>
-      <div class="field"><label>Tekne adı</label><input data-cust="boat"></div>
-      <div class="field"><label>Model</label><input data-cust="model"></div>
-      <div class="field"><label>Bayrak</label><input data-cust="flag"></div>
-    </div>
-  </div>
-
-  <div id="services" style="margin-top:14px"></div>
-  <div style="display:flex; gap:8px; width:100%">
-    <button class="btn btn-ghost" onclick="addService()" style="flex:1; border:1px dashed #cbd5e1">+ Yeni servis bölümü</button>
-    <button class="btn btn-primary" onclick="openWizardModal()" style="flex:1; background:#0ea5e9; border:none">🪄 Otomatik Teklif Sihirbazı</button>
-    <button class="btn btn-primary" onclick="openHistoryPicker()" style="flex:1; background:#f1f5f9; color:#0f2438; border:1px solid #cbd5e1">🔍 Geçmiş Tekliflerden Çek</button>
-  </div>
-
-  <div class="summary">
-    <div class="sum-row"><span>İşçilik toplamı / Total Labour</span><span id="tLab">0,00</span></div>
-    <div class="sum-row"><span>Malzeme toplamı / Total Material</span><span id="tMat">0,00</span></div>
-    <div class="sum-row"><span>KDV %20 (sadece işçilik) / VAT</span><span id="tVat">0,00</span></div>
-    <div class="sum-row grand"><span>GENEL TOPLAM / GRAND TOTAL</span><span id="tGrand">0,00</span></div>
-    <div class="actions" style="align-items:center;">
-      <select id="quoteCurrency" onchange="updateCurrency()" style="width:100px; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; margin-right: auto; cursor: pointer; color:#1e293b;">
-        <option value="EUR">Euro (€)</option>
-        <option value="USD">Dolar ($)</option>
-        <option value="TRY">TL (₺)</option>
-      </select>
-      <button class="btn btn-green" onclick="exportXlsx('TR')">🇹🇷 Excel (TR)</button>
-      <button class="btn btn-green" onclick="exportXlsx('EN')">🇬🇧 Excel (EN)</button>
-      <button class="btn btn-ghost" onclick="clearQuote()">Temizle</button>
-    </div>
-  </div>
-</div>
-
-<div class="overlay" id="overlay" onclick="closePicker()"></div>
-<div class="picker" id="picker">
-  <div class="picker-head">
-    <div><b>Katalogdan ekle</b><div class="target" id="pickerTarget"></div></div>
-    <button class="picker-close" onclick="closePicker()">✕</button>
-  </div>
-  <div class="picker-search"><input id="pq" placeholder="Ara: motor, zehirli boya, ırgat…" oninput="renderPicker()"></div>
-  <div class="cat-chips" id="catChips"></div>
-  <div class="picker-body" id="pickerBody"></div>
-  <div class="picker-count"><span id="pickerAdded">Tıkladıkça teklife eklenir</span>
-    <button class="btn btn-primary btn-sm" onclick="closePicker()">Bitti</button></div>
-</div>
-
-<div class="overlay" id="historyOverlay" onclick="closeHistoryPicker()"></div>
-<div class="picker" id="historyPicker">
-  <div class="picker-head">
-    <div><b>Geçmiş Tekliflerden Servis Çek</b></div>
-    <button class="picker-close" onclick="closeHistoryPicker()">✕</button>
-  </div>
-  <div class="picker-search"><input id="hq" placeholder="Ara: Tekne adı, servis başlığı, notlar…" oninput="renderHistoryPicker()"></div>
-  <div class="picker-body" id="historyBody" style="background:#f8fafc; padding-top:12px"></div>
-</div>
-
-<div class="overlay" id="draftOverlay" onclick="closeDrafts()"></div>
-<div class="catalog-modal" id="draftModal">
-  <div class="modal-header"><b>Kayıtlı Taslaklar</b><button class="picker-close" onclick="closeDrafts()">✕</button></div>
-  <div id="draftList" class="catalog-list"></div>
-</div>
-
-<div class="overlay" id="crmOverlay" onclick="closeCrmModal()"></div>
-<div class="catalog-modal" id="crmModal" style="width: min(700px, 94vw)">
-  <div class="modal-header"><b>CRM'den Talep Seç <span id="crmModalCount" style="font-weight:600; font-size:12px; color:#b45309;"></span></b><button class="picker-close" onclick="closeCrmModal()">✕</button></div>
-  <div style="padding:10px 16px 0;"><input type="text" id="crmSearch" placeholder="Müşteri veya Tekne Ara..." oninput="renderCrmList()" style="width:100%; margin-bottom:8px;"></div>
-  <div id="crmList" class="catalog-list" style="background:#f8fafc;"></div>
-</div>
-
-<div class="overlay" id="wizardOverlay" onclick="closeWizardModal()"></div>
-<div class="catalog-modal" id="wizardModal" style="width: min(780px, 96vw); padding:0; border-radius:14px; overflow:hidden; max-height:92vh; flex-direction:column;">
-
-  <!-- Header -->
-  <div style="background:linear-gradient(135deg,#0f2438 0%,#1273b8 100%); padding:18px 20px; display:flex; align-items:center; justify-content:space-between;">
-    <div>
-      <div style="color:#fff; font-size:16px; font-weight:700;">🪄 Otomatik Teklif Sihirbazı</div>
-      <div style="color:#7da3c0; font-size:12px; margin-top:2px;">Seçimlerinize göre teklif kalemlerini otomatik oluşturun</div>
-    </div>
-    <button class="picker-close" onclick="closeWizardModal()" style="color:#fff;">✕</button>
-  </div>
-
-  <!-- CRM Info Bar -->
-  <div id="wizCrmBar" style="background:#e0f2fe; padding:12px 20px; display:flex; align-items:center; gap:16px; border-bottom:1px solid #bae6fd; font-size:13px; flex-wrap:wrap;">
-    <div style="display:flex; align-items:center; gap:8px;">
-      <span style="font-size:18px;">⛵</span>
-      <div>
-        <div id="wizCrmBoat" style="font-weight:700; color:#0f2438;">—</div>
-        <div id="wizCrmCustomer" style="color:#64748b; font-size:11px;">—</div>
-      </div>
-    </div>
-    <div style="display:flex; gap:16px; margin-left:auto; flex-wrap:wrap;">
-      <div style="text-align:center;">
-        <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:.05em;">LOA</div>
-        <div id="wizCrmLoa" style="font-weight:700; color:#0f2438;">—</div>
-      </div>
-      <div style="text-align:center;">
-        <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:.05em;">Motor Tipi</div>
-        <div id="wizCrmMotorType" style="font-weight:700; color:#0f2438;">—</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tabs Header -->
-  <div style="display:flex; background:#f1f5f9; border-bottom:1px solid #e2e8f0; overflow-x:auto;">
-    <button class="wiz-tab-btn active" onclick="switchWizTab('motor')" id="wizTabBtn-motor">⚙️ Motor & Mekanik</button>
-    <button class="wiz-tab-btn" onclick="switchWizTab('boya')" id="wizTabBtn-boya">🎨 Gövde & Boya</button>
-    <button class="wiz-tab-btn" onclick="switchWizTab('ekipman')" id="wizTabBtn-ekipman">⚡ Ekipman (Jen vb.)</button>
-  </div>
-
-  <div style="padding:20px; background:#f8fafc; overflow-y:auto; flex:1;" id="wizTabsContainer">
-
-    <!-- TAB: MOTOR -->
-    <div class="wiz-tab-content" id="wizTab-motor">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
-        <div class="field">
-          <label style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Motor Marka / Model</label>
-          <select id="wizEngineModel" style="margin-top:4px;" onchange="renderWizEngineParts()">
-            <option value="">Seçiniz...</option>
-            <!-- Dolacak -->
-          </select>
-        </div>
-        <div class="field">
-          <label style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Bakım Periyodu</label>
-          <select id="wizEngineInterval" style="margin-top:4px;" onchange="renderWizEngineParts()">
-            <option value="">Seçiniz...</option>
-            <option value="50">50 Saat (İlk Bakım)</option>
-            <option value="100">100 Saat (Yıllık)</option>
-            <option value="250">250 Saat</option>
-            <option value="500">500 Saat</option>
-            <option value="1000">1000 Saat</option>
-          </select>
-        </div>
-      </div>
-      
-      <div id="wizEnginePreview">
-        <div style="text-align:center; padding:30px; color:#94a3b8; font-size:13px; border:1px dashed #cbd5e1; border-radius:8px;">
-          Motor modeli ve bakım periyodu seçin.
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: BOYA -->
-    <div class="wiz-tab-content" id="wizTab-boya" style="display:none;">
-      <div class="field" style="max-width:200px; margin-bottom:16px;">
-        <label style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Tekne Boyu (LOA)</label>
-        <select id="wizLoa" style="margin-top:4px;" onchange="updateWizPrices()">
-          <option value="">Seçiniz...</option>
-          <option value="≤25 ft">≤25 ft</option>
-          <option value="26-30 ft">26-30 ft</option>
-          <option value="31-35 ft">31-35 ft</option>
-          <option value="36-40 ft">36-40 ft</option>
-          <option value="41-45 ft">41-45 ft</option>
-          <option value="46-50 ft">46-50 ft</option>
-          <option value="51-55 ft">51-55 ft</option>
-          <option value="56-60 ft">56-60 ft</option>
-        </select>
-      </div>
-
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <label id="wizCardBoya" style="display:flex; align-items:center; gap:12px; background:#fff; padding:14px 16px; border:2px solid #cbd5e1; border-radius:10px; cursor:pointer; transition:border-color .2s;">
-          <input type="checkbox" id="wizChkBoya" style="width:18px;height:18px;accent-color:#0ea5e9;" onchange="updateWizPrices()">
-          <div style="flex:1;">
-            <div style="font-weight:600; color:#0f2438;">✨ Borda Pasta &amp; Cila Paketi</div>
-            <div style="font-size:11px; color:#64748b; margin-top:2px;">Borda yüzeyi pasta + cila + koruyucu kaplama</div>
-          </div>
-          <div id="wizPriceBoya" style="font-weight:700; color:#0ea5e9; font-size:14px; white-space:nowrap;">—</div>
-        </label>
-        
-        <label id="wizCardZehirli" style="display:flex; align-items:center; gap:12px; background:#fff; padding:14px 16px; border:2px solid #cbd5e1; border-radius:10px; cursor:pointer; transition:border-color .2s;">
-          <input type="checkbox" id="wizChkZehirli" style="width:18px;height:18px;accent-color:#0ea5e9;" onchange="updateWizPrices()">
-          <div style="flex:1;">
-            <div style="font-weight:600; color:#0f2438;">⚓ Zehirli Boya Uygulaması</div>
-            <div style="font-size:11px; color:#64748b; margin-top:2px;">Alt yıkama, zımpara ve 2 kat zehirli boya uygulaması</div>
-          </div>
-          <div id="wizPriceZehirli" style="font-weight:700; color:#0ea5e9; font-size:14px; white-space:nowrap;">—</div>
-        </label>
-      </div>
-      
-      <!-- Fiyat Matrisi Gösterimi Sadece Burada -->
-      <div style="margin-top:20px;">
-        <button onclick="toggleWizMatrix()" style="background:none; border:1px dashed #94a3b8; color:#64748b; font-size:12px; padding:7px 14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px; width:100%;">
-          <span id="wizMatrixArrow">▶</span> 📊 Fiyat Matrisini Düzenle <span style="margin-left:auto; font-size:11px; color:#94a3b8;">Değiştirdikte kaydedilir</span>
-        </button>
-        <div id="wizMatrixPanel" style="display:none; margin-top:12px; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; font-size:12px;">
-          <!-- Pasta Cila -->
-          <div style="background:#f1f5f9; padding:8px 14px; font-weight:700; color:#0f2438; border-bottom:1px solid #e2e8f0;">✨ Borda Pasta & Cila — İşçilik (€)</div>
-          <div style="padding:12px; display:grid; grid-template-columns:repeat(4,1fr); gap:8px;" id="matrixPastaCila"></div>
-          <!-- Zehirli -->
-          <div style="background:#f1f5f9; padding:8px 14px; font-weight:700; color:#0f2438; border-top:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0;">⚓ Zehirli Boya — İşçilik (€)</div>
-          <div style="padding:12px; display:grid; grid-template-columns:repeat(4,1fr); gap:8px;" id="matrixZehirli"></div>
-          <div style="padding:10px 14px; display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e2e8f0; background:#f8fafc;">
-            <button onclick="resetWizPrices()" style="font-size:12px; background:none; border:1px solid #e2e8f0; padding:6px 14px; border-radius:6px; cursor:pointer; color:#64748b;">↺ Varsayılana Dön</button>
-            <button onclick="saveWizPrices()" style="font-size:12px; background:#0ea5e9; color:#fff; border:none; padding:6px 14px; border-radius:6px; cursor:pointer;">💾 Kaydet</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: EKIPMAN -->
-    <div class="wiz-tab-content" id="wizTab-ekipman" style="display:none;">
-      <div style="text-align:center; padding:30px; color:#94a3b8; font-size:13px; border:1px dashed #cbd5e1; border-radius:8px;">
-        Jeneratör, Su Yapıcı vb. modüller yakında eklenecektir.<br>Şimdilik boş.
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Footer -->
-  <div style="padding:16px 20px; border-top:1px solid #e2e8f0; background:#fff;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div style="font-size:13px; color:#64748b;">
-        Eklenen Paketler: <b id="wizSelectedCount" style="color:#0f2438;">0</b> | 
-        Tahmini Toplam: <b id="wizTotal" style="color:#0f2438; font-size:15px;">0 €</b>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-ghost" onclick="closeWizardModal()">İptal</button>
-        <button class="btn btn-primary" onclick="applyWizard()" style="background:#0ea5e9;">✅ Teklife Ekle</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<style>
-.wiz-tab-btn { flex:1; padding:12px; font-size:13px; font-weight:600; color:#64748b; background:transparent; border:none; border-bottom:3px solid transparent; cursor:pointer; transition:all .2s; }
-.wiz-tab-btn:hover { background:#e2e8f0; color:#0f2438; }
-.wiz-tab-btn.active { color:#1273b8; border-bottom-color:#1273b8; background:#fff; }
-</style>
-
-<div class="overlay" id="dlOverlay" onclick="closeDl()"></div>
-<div class="picker" id="dlBox" style="height:auto;max-height:none;width:min(420px,92vw)">
-  <div class="picker-head"><b>Excel hazır</b>
-    <button class="picker-close" onclick="closeDl()">✕</button></div>
-  <div style="padding:18px 16px 20px">
-    <p class="note" style="margin-bottom:14px">Dosya oluşturuldu. İndirme kendiliğinden başlamadıysa aşağıdaki düğmeye dokun.</p>
-    <a id="dlLink" class="btn btn-green" style="display:block;text-align:center;text-decoration:none;padding:12px">⬇ <span id="dlName">teklif.xlsx</span> indir</a>
-  </div>
-</div>
-
-<div class="wrap hidden" id="tab-veri" style="max-width:820px">
-  <div class="card">
-    <h3>Excel fiyat listesi yükle</h3>
-    <p class="note">FIYAT_LIST, Yanmar tabloları, vana stok listesi gibi dosyalarını yükle; sütunları eşleştir, kataloğa eklensin. Bir kere yüklersin — tarayıcıda kayıtlı kalır.</p>
-    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="onFile(event)">
-    <button class="btn btn-primary" style="margin-top:10px" onclick="document.getElementById('fileInput').click()">📁 Dosya seç (.xlsx / .csv)</button>
-
-    <div id="mapper" class="hidden">
-      <div class="map-grid">
-        <div class="field"><label>Sayfa</label><select id="mSheet" onchange="onSheetChange()"></select></div>
-        <div class="field"><label>Kategori adı</label><input id="mCat"></div>
-        <div class="field"><label>Parça No / Kod sütunu (isteğe bağlı)</label><select id="mCode"></select></div>
-        <div class="field"><label>Açıklama sütunu *</label><select id="mDesc"></select></div>
-        <div class="field"><label>Fiyat sütunu *</label><select id="mPrice"></select></div>
-        <div class="field"><label>Birim sütunu (isteğe bağlı)</label><select id="mUnit"></select></div>
-        <div class="field"><label>Kalem türü</label>
-          <select id="mType"><option value="iscilik">İşçilik</option><option value="malzeme">Malzeme</option></select>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="btn btn-green" onclick="doImport()">Kataloğa aktar →</button>
-        <button class="btn btn-ghost" onclick="cancelImport()">İptal</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>Tek kalem ekle</h3>
-    <div class="map-grid">
-      <div class="field"><label>Kategori</label><input id="manCat" placeholder="Örn: Yanmar İşçilik"></div>
-      <div class="field"><label>Parça No / Kod</label><input id="manCode" placeholder="Örn: VP-861477"></div>
-      <div class="field"><label>Açıklama</label><input id="manDesc"></div>
-      <div class="field"><label>Fiyat</label><input id="manPrice" placeholder="0,00"></div>
-      <div class="field"><label>Tür</label>
-        <select id="manType"><option value="iscilik">İşçilik</option><option value="malzeme">Malzeme</option></select>
-      </div>
-    </div>
-    <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="addManual()">+ Ekle</button>
-  </div>
-
-  <div class="card">
-    <h3>Katalog durumu <span id="dbCount" style="color:#1273b8"></span></h3>
-    <div id="dbCats"></div>
-    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="exportJson()">⬇ Yedek indir (JSON)</button>
-      <input type="file" id="jsonInput" accept=".json" class="hidden" onchange="onJson(event)">
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('jsonInput').click()">⬆ Yedekten yükle</button>
-      <button class="btn btn-ghost btn-sm" onclick="loadBuiltin()">🔧 İşler Matrisini yükle</button>
-    </div>
-  </div>
-</div>
-
-<script>
 const BUILTIN = [{"cat":"Motor Atölyesi","type":"iscilik","desc":"Kuyruk Servisi — Kıç aynadan montajlı (DPI vb.)","unit":"EACH","price":260.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Kuyruk Servisi — Kıç aynadan montajlı (ZT350 vb.)","unit":"EACH","price":350.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Kuyruk Servisi — Yelkenli Sdrive VOLVO","unit":"EACH","price":100.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Kuyruk Servisi — Yelkenli Sdrive YANMAR","unit":"EACH","price":125.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Kuyruk Servisi — Volvo Penta IPS","unit":"EACH","price":500.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Motor Servisleri — 2-5 HP","unit":"EACH","price":97.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Motor Servisleri — 8-20 HP","unit":"EACH","price":130.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Motor Servisleri — 25 HP","unit":"EACH","price":156.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Motor Servisleri — 30-40 HP","unit":"EACH","price":210.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Motor Servisleri — 50-70 HP","unit":"EACH","price":260.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Motor Servisleri — 80-130 HP","unit":"EACH","price":330.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Motor Servisleri — 150-200 HP","unit":"EACH","price":370.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Motor Servisleri — 225-300 HP","unit":"EACH","price":430.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Karbüratör Bakımı — 2-5 HP","unit":"EACH","price":34.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Karbüratör Bakımı — 8-20 HP","unit":"EACH","price":46.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Karbüratör Bakımı — 25 HP","unit":"EACH","price":70.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Karbüratör Bakımı — 30-40 HP","unit":"EACH","price":100.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Karbüratör Bakımı — 50-70 HP","unit":"EACH","price":120.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Karbüratör Bakımı — 80-130 HP","unit":"EACH","price":160.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Karbüratör Bakımı — 150-200 HP","unit":"EACH","price":180.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Karbüratör Bakımı — 225-300 HP","unit":"EACH","price":280.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Zehirli Boya Uygulaması — 1 adet (2,5 Lt kutu)","unit":"EACH","price":170.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Zehirli Boya Uygulaması — 2 adet (2,5 Lt kutu)","unit":"EACH","price":250.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Zehirli Boya Uygulaması — 3 adet (2,5 Lt kutu)","unit":"EACH","price":280.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Zehirli Boya Uygulaması — 4 adet (2,5 Lt kutu)","unit":"EACH","price":350.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Zehirli Boya Uygulaması — 5 adet (2,5 Lt kutu)","unit":"EACH","price":500.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Zehirli Boya Uygulaması — 6 adet (2,5 Lt kutu)","unit":"EACH","price":650.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Borda Pasta ve Cilası — 1 adet (takım)","unit":"EACH","price":100.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Borda Pasta ve Cilası — 2 adet (takım)","unit":"EACH","price":150.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Borda Pasta ve Cilası — 3 adet (takım)","unit":"EACH","price":250.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Borda Pasta ve Cilası — 4 adet (takım)","unit":"EACH","price":350.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Borda Pasta ve Cilası — 5 adet (takım)","unit":"EACH","price":450.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Borda Pasta ve Cilası — 6 adet (takım)","unit":"EACH","price":0.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Epoxy Koruma Uygulamaları — 15ft ve altı","unit":"EACH","price":1800.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Epoxy Koruma Uygulamaları — 16-25ft","unit":"EACH","price":2300.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Epoxy Koruma Uygulamaları — 26-35ft","unit":"EACH","price":2800.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Epoxy Koruma Uygulamaları — 36-45ft","unit":"EACH","price":3300.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Epoxy Koruma Uygulamaları — 46-55ft","unit":"EACH","price":4000.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Epoxy Koruma Uygulamaları — 56ft ve üstü","unit":"EACH","price":5000.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Ozmoz Tedavi Uygulamaları — 15ft ve altı","unit":"EACH","price":2970.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Ozmoz Tedavi Uygulamaları — 16-25ft","unit":"EACH","price":3520.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Ozmoz Tedavi Uygulamaları — 26-35ft","unit":"EACH","price":4070.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Ozmoz Tedavi Uygulamaları — 36-45ft","unit":"EACH","price":4620.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Ozmoz Tedavi Uygulamaları — 46-55ft","unit":"EACH","price":5500.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Ozmoz Tedavi Uygulamaları — 56ft ve üstü","unit":"EACH","price":6600.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Irgat Mekanik Bakımı — 500W","unit":"EACH","price":200.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Irgat Mekanik Bakımı — 700W","unit":"EACH","price":250.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Irgat Mekanik Bakımı — 1000W","unit":"EACH","price":300.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Irgat Mekanik Bakımı — 1500W","unit":"EACH","price":350.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Vinç Mekanik Bakımı — 35 kalibre","unit":"EACH","price":150.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Vinç Mekanik Bakımı — 40 kalibre","unit":"EACH","price":200.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Vinç Mekanik Bakımı — 46 kalibre","unit":"EACH","price":250.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Vinç Mekanik Bakımı — 50 kalibre","unit":"EACH","price":300.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Dümen Yekesi Sökümü — 26-35ft","unit":"EACH","price":700.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Dümen Yekesi Sökümü — 36-45ft","unit":"EACH","price":1200.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Dümen Yekesi Sökümü — 46-55ft","unit":"EACH","price":1500.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Dümen Yekesi Sökümü — 56ft ve üstü","unit":"EACH","price":2000.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Ana Direk ve Bumba Sökümü — 26-35ft","unit":"EACH","price":1500.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Ana Direk ve Bumba Sökümü — 36-45ft","unit":"EACH","price":3000.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Ana Direk ve Bumba Sökümü — 46-55ft","unit":"EACH","price":4000.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Ana Direk ve Bumba Sökümü — 56ft ve üstü","unit":"EACH","price":5000.0},{"cat":"Yelken ve Döşeme","type":"iscilik","desc":"Yelken Sökümü (feet başına)","unit":"FT","price":1.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Jeneratör Servisi","unit":"EACH","price":0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Yakıt Tankı Temizliği (Olası söküm durumuna göre fiyatlandırılır)","unit":"EACH","price":0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Motor, Jeneratör, Kuyruk, Saildrive ve IPS Kapsamlı Onarımlar ve Ağır Bakımlar","unit":"EACH","price":0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"İçten Takma Motorlarda Bilgisayar Yardımı İle Olası Sorunların Teşhisi Ve Genel Testler","unit":"EACH","price":200.0},{"cat":"Motor Atölyesi","type":"iscilik","desc":"Dıştan Takma Motorlarda Bilgisayar Yardımı İle Olası Sorunların Teşhisi Ve Genel Testler","unit":"EACH","price":120.0},{"cat":"Boya Bakım","type":"iscilik","desc":"Çelik veya Alüminyum gövde teknelerde, salma ve diğer ekipmanlarda sulu raspa uygulamaları (Detaylar için sorunuz)","unit":"EACH","price":0},{"cat":"Boya Bakım","type":"iscilik","desc":"Her türlü yüzeyler için Poliüretan/Akrilik/Sentetik son kat boya uygulamaları (Detaylar için sorunuz)","unit":"EACH","price":0},{"cat":"Yelken ve Döşeme","type":"iscilik","desc":"Yelken yıkaması ve atölyede depolanması (metrekare başına)","unit":"M2","price":3.5},{"cat":"Yelken ve Döşeme","type":"iscilik","desc":"Her türlü bimini, siperlik, kışlık tente, yelken atölyede depolanması (aylık)","unit":"MONTH","price":17.5},{"cat":"Yelken ve Döşeme","type":"iscilik","desc":"Tekne üzerindeki her türlü yeni yelken, tente, kılıf işleri (Detaylar için sorunuz)","unit":"EACH","price":0},{"cat":"Yelken ve Döşeme","type":"iscilik","desc":"Tekne iç/dış yerleşimdeki her türlü minder, yatak, perde işleri (Detaylar için sorunuz)","unit":"EACH","price":0},{"cat":"Marangoz Atölyesi","type":"iscilik","desc":"Teak güverte yenileme (malzeme dahil) (metrekare başına) (Detaylar için sorunuz)","unit":"M2","price":900.0},{"cat":"Marangoz Atölyesi","type":"iscilik","desc":"Teak güverte armuz mastiklerini yenileme (malzeme dahil) (metrekare başına) (Detaylar için sorunuz)","unit":"M2","price":300.0},{"cat":"Marangoz Atölyesi","type":"iscilik","desc":"Tekne iç/dış yerleşimdeki her türlü mobilya ve ahşap parça imalatı (Detaylar için sorunuz)","unit":"EACH","price":0},{"cat":"Marangoz Atölyesi","type":"iscilik","desc":"Plexiglass Cam Değişimi","unit":"EACH","price":0},{"cat":"Elektrik Atölyesi","type":"iscilik","desc":"Motor Dinamo Bakımı","unit":"EACH","price":150.0},{"cat":"Elektrik Atölyesi","type":"iscilik","desc":"Irgat Dinamo Bakımı","unit":"EACH","price":150.0},{"cat":"Elektrik Atölyesi","type":"iscilik","desc":"Elektrik Vinç Motor Bakımı","unit":"EACH","price":100.0},{"cat":"Elektrik Atölyesi","type":"iscilik","desc":"Tekne üzerindeki her türlü elektrik veya sıhhi tesisat bakım ve onarımları","unit":"EACH","price":0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Vana, kovan ve hortum bağlantılarının değişimi sarf malzeme (sikaflex, würth boru dişi sabitleyici) dahil","unit":"EACH","price":220.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Saildrive pervane şaft mili tamiratı","unit":"EACH","price":250.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Katlanır pervane sökümü/bakımı/montajı (x se €100 ilave edilecektir)","unit":"EACH","price":200.0},{"cat":"Mekanik/Torna Atölyesi","type":"iscilik","desc":"Tekne üzerindeki her türlü mekanik bakım ve onarımları","unit":"EACH","price":0},{"cat":"Diğer Servisler","type":"iscilik","desc":"Raymarine Servisi(Antalya'dan Kaş/Finike Marinaya Servis Ücreti)","unit":"EACH","price":0},{"cat":"Diğer Servisler","type":"iscilik","desc":"Zincir, çapa galvaniz işleri (tekneden söküm/montaj hariç) (KG başına ücrettir)","unit":"KG","price":2.0},{"cat":"Diğer Servisler","type":"iscilik","desc":"Isıtma/soğutma sistemleri servis ücreti (kontrol ve gaz takviyesi içerir)","unit":"EACH","price":100.0},{"cat":"Diğer Servisler","type":"iscilik","desc":"Su yapıcı kışlama (temizleme malzemeleri içerir, filtreler hariçtir)","unit":"EACH","price":220.0},{"cat":"Diğer Servisler","type":"iscilik","desc":"Yelkenli teknelerde direğe tırmanma işleri","unit":"EACH","price":220.0},{"cat":"Diğer Servisler","type":"iscilik","desc":"Dalgıçlık Hizmeti","unit":"EACH","price":75.0},{"cat":"Diğer Servisler","type":"iscilik","desc":"Dalgıç ile tekne altı temizliği (saat başına)","unit":"HOUR","price":150.0}];
 
 let db = [];
@@ -799,7 +344,7 @@ function addItem(svcId, kind, item, silent) {
   const s = quote.services.find(x => x.id === svcId);
   if (!s) return;
   const newId = uid();
-  s[kind].push({ id: newId, code: item?.code || "", desc: item?.desc || "", qty: 1, unit: item?.unit || "EACH", price: item?.price ?? 0 });
+  s[kind].push({ id: newId, desc: item?.desc || "", qty: 1, unit: item?.unit || "EACH", price: item?.price ?? 0 });
   renderServices(); save(false, true);
   if (!silent) toast("Eklendi");
 }
@@ -839,7 +384,6 @@ function renderServices() {
              ondragend="onItemDragEnd(event)"
              ondrop="onItemDrop(event, '${s.id}', '${kind}', '${it.id}')">
           <button class="opt-btn" onclick="toggleOpt('${s.id}','${kind}','${it.id}')">${it.opt === 1 ? '🟢' : it.opt === 2 ? '🔴' : '⚪'}</button>
-          <input value="${esc(it.code || '')}" placeholder="${isLab ? 'İş Kodu' : 'Parça No'}" data-item="${s.id}|${kind}|${it.id}|code">
           <input value="${esc(it.desc)}" placeholder="Açıklama" data-item="${s.id}|${kind}|${it.id}|desc">
           <input value="${esc(it.qty)}" data-item="${s.id}|${kind}|${it.id}|qty" style="text-align:right">
           <input value="${esc(it.unit)}" data-item="${s.id}|${kind}|${it.id}|unit">
@@ -1218,7 +762,7 @@ function pickerFiltered() {
   const q = (document.getElementById("pq").value || "").toLocaleLowerCase("tr");
   return db.filter(i =>
     (!pickerCat || i.cat === pickerCat) &&
-    (!q || (i.desc + " " + i.cat + " " + (i.code || "")).toLocaleLowerCase("tr").includes(q)));
+    (!q || (i.desc + " " + i.cat).toLocaleLowerCase("tr").includes(q)));
 }
 function renderPicker() {
   const items = pickerFiltered();
@@ -1246,7 +790,7 @@ function renderPicker() {
       <div class="grp-name"><span class="dot ${g.vars[0].item.type === "malzeme" ? "m" : "i"}"></span>${esc(g.name)} <span class="grp-cat">${esc(g.cat)}</span></div>
       <div class="var-chips">` +
       g.vars.map(v => `<button class="var-chip" data-pick="${v.item.id}">
-          ${v.item.code ? `[${esc(v.item.code)}] ` : ''}${esc(v.label)} <span class="p ${v.item.price > 0 ? "" : "zero"}">${v.item.price > 0 ? fmt(v.item.price) : "fiyat gir"}</span>
+          ${esc(v.label)} <span class="p ${v.item.price > 0 ? "" : "zero"}">${v.item.price > 0 ? fmt(v.item.price) : "fiyat gir"}</span>
         </button>`).join("") +
       `</div></div>`;
   }
@@ -1254,7 +798,7 @@ function renderPicker() {
     html += `<div class="grp"><div class="grp-name">Tekil kalemler</div>` +
       singles.map(i => `<button class="single-item" data-pick="${i.id}">
           <span class="dot ${i.type === "malzeme" ? "m" : "i"}"></span>
-          <span>${i.code ? `<b>[${esc(i.code)}]</b> ` : ''}${esc(i.desc)}</span>
+          <span>${esc(i.desc)}</span>
           <span class="p ${i.price > 0 ? "" : "zero"}">${i.price > 0 ? fmt(i.price) : "fiyat gir"}</span>
         </button>`).join("") + `</div>`;
   }
@@ -1304,13 +848,11 @@ function onSheetChange() {
   };
   const opts = `<option value="-1">Seç…</option>` + Array.from({ length: colCount })
     .map((_, ci) => `<option value="${ci}">Sütun ${String.fromCharCode(65 + (ci % 26))} — ${esc(sample(ci))}</option>`).join("");
-  document.getElementById("mCode").innerHTML = opts;
   document.getElementById("mDesc").innerHTML = opts;
   document.getElementById("mPrice").innerHTML = opts;
   document.getElementById("mUnit").innerHTML = opts;
 }
 function doImport() {
-  const c = +document.getElementById("mCode").value;
   const d = +document.getElementById("mDesc").value;
   const p = +document.getElementById("mPrice").value;
   const u = +document.getElementById("mUnit").value;
@@ -1322,7 +864,7 @@ function doImport() {
     const desc = String(r[d] ?? "").trim();
     const price = parseNum(r[p]);
     if (!desc || price <= 0) continue;
-    items.push({ id: uid(), cat, type, code: c >= 0 ? String(r[c] ?? "").trim() : "", desc, unit: u >= 0 ? String(r[u] || "EACH") : "EACH", price });
+    items.push({ id: uid(), cat, type, desc, unit: u >= 0 ? String(r[u] || "EACH") : "EACH", price });
   }
   if (!items.length) { toast("Bu eşleşmeyle geçerli satır bulunamadı"); return; }
   db = db.concat(items);
@@ -1338,12 +880,10 @@ function addManual() {
   db.push({
     id: uid(),
     cat: document.getElementById("manCat").value.trim() || "Genel",
-    code: document.getElementById("manCode").value.trim(),
     type: document.getElementById("manType").value,
     desc, unit: "EACH",
     price: parseNum(document.getElementById("manPrice").value),
   });
-  document.getElementById("manCode").value = "";
   document.getElementById("manDesc").value = "";
   document.getElementById("manPrice").value = "";
   refreshDb(); save(); toast("Kalem eklendi");
@@ -1386,7 +926,6 @@ function refreshDb() {
             ${items.map(i => `
               <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
                 <span style="font-size:11px; color:#94a3b8; width:46px;">${i.type === 'iscilik' ? 'İşçilik' : 'Malzeme'}</span>
-                <input value="${esc(i.code || '')}" placeholder="Parça No / Kod" style="width:100px; padding:5px 8px; font-size:12.5px" onchange="updateDbItem('${i.id}', 'code', this.value)" title="Parça Numarasını / Kodu düzenle">
                 <input value="${esc(i.desc)}" style="flex:1; padding:5px 8px; font-size:12.5px" onchange="updateDbItem('${i.id}', 'desc', this.value)" title="Açıklamayı düzenle">
                 <div style="position:relative; display:inline-block;">
                   <input value="${esc(i.price)}" style="width:86px; padding:5px 22px 5px 8px; font-size:12.5px; text-align:right" onchange="updateDbItem('${i.id}', 'price', this.value)" title="Fiyatı düzenle">
@@ -1576,8 +1115,7 @@ async function exportXlsx(lang = 'EN') {
   const labourSubs = [], matSubs = [];
 
   const writeTable = (rows, header) => {
-    C(r, 2, lang === 'TR' ? (header === dict.works ? "KOD" : "PARÇA NO") : (header === dict.works ? "CODE" : "PART NO"), { font: { bold: true }, fill: BLUE, border: BOX, align: { horizontal: "center" } });
-    C(r, 3, header, { font: { bold: true }, fill: BLUE, border: BOX });
+    MR(r, 2, 3); C(r, 2, header, { font: { bold: true }, fill: BLUE, border: BOX });
     [dict.qty, dict.unit, dict.uPrice, dict.total].forEach((h, i) =>
       C(r, 4 + i, h, { font: { bold: true }, fill: BLUE, border: BOX, align: { horizontal: "center" } }));
     r++;
@@ -1590,8 +1128,8 @@ async function exportXlsx(lang = 'EN') {
       if (it.opt === 1) hl = "E2EFDA"; // green
       if (it.opt === 2) hl = "FCE4D6"; // red
 
-      C(r, 2, it.code || "", { border: BOX, fill: hl, align: { horizontal: "center", vertical: "top" } });
-      C(r, 3, it.desc || "", { border: BOX, fill: hl, align: { wrapText: true, vertical: "top" } });
+      MR(r, 2, 3);
+      C(r, 2, it.desc || "", { border: BOX, fill: hl, align: { wrapText: true, vertical: "top" } });
       C(r, 4, qty, { border: BOX, fill: hl, align: { horizontal: "center" } });
       C(r, 5, it.unit || "EACH", { border: BOX, fill: hl, align: { horizontal: "center" } });
       C(r, 6, price, { border: BOX, fill: hl, fmt: numFmt });
@@ -2042,21 +1580,11 @@ function getBucketForEngine(model) {
   return '40-55 HP';
 }
 
-function getAutomationData() {
-  try {
-    const saved = localStorage.getItem('service_automation_rules');
-    if (saved) return JSON.parse(saved);
-  } catch(e) {}
-  return typeof SERVICE_AUTOMATION_DATA !== 'undefined' ? SERVICE_AUTOMATION_DATA : { schedules: {}, engineParts: {} };
-}
-
 function renderWizEngineOptions() {
   const sel = document.getElementById('wizEngineModel');
-  if (!sel) return;
-  const data = getAutomationData();
-  const models = Object.keys(data.engineParts || {}).sort();
-  const sirali = [...models].sort((a, b) => engineBrandLabel(a).localeCompare(engineBrandLabel(b), 'tr'));
-  sel.innerHTML = '<option value="">Seçiniz...</option>' + sirali.map(m => `<option value="${m}">${engineBrandLabel(m)}</option>`).join('');
+  if (!sel || !window.SERVICE_AUTOMATION_DATA) return;
+  const models = Object.keys(SERVICE_AUTOMATION_DATA.engineParts);
+  sel.innerHTML = '<option value="">Seçiniz...</option>' + models.map(m => `<option value="${m}">Volvo Penta ${m}</option>`).join('');
 }
 
 function renderWizEngineParts() {
@@ -2072,9 +1600,7 @@ function renderWizEngineParts() {
     return;
   }
 
-  const data = getAutomationData();
-  const partsObj = data.engineParts[model];
-  const parts = partsObj ? (partsObj[`interval_${interval}`] || []) : [];
+  const parts = SERVICE_AUTOMATION_DATA.engineParts[model]?.[`interval_${interval}`] || [];
   let partsTotal = 0;
   let html = `<div style="background:#fff; border:2px solid #0ea5e9; border-radius:10px; padding:16px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -2123,13 +1649,9 @@ function updateWizPrices() {
   document.getElementById('wizPriceBoya').textContent    = loa ? boyaPrice    + ' €' : '—';
   document.getElementById('wizPriceZehirli').textContent = loa ? zehirliPrice + ' €' : '—';
 
-  const chkEngineEl = document.getElementById('wizChkEngine');
-  const chkBoyaEl   = document.getElementById('wizChkBoya');
-  const chkZehirliEl= document.getElementById('wizChkZehirli');
-
-  const chkEngine  = chkEngineEl ? chkEngineEl.checked : false;
-  const chkBoya    = chkBoyaEl ? chkBoyaEl.checked : false;
-  const chkZehirli = chkZehirliEl ? chkZehirliEl.checked : false;
+  const chkEngine  = document.getElementById('wizChkEngine')?.checked;
+  const chkBoya    = document.getElementById('wizChkBoya').checked;
+  const chkZehirli = document.getElementById('wizChkZehirli').checked;
 
   let total = 0;
   let count = 0;
@@ -2144,11 +1666,8 @@ function updateWizPrices() {
   document.getElementById('wizTotal').textContent = total + ' €';
   document.getElementById('wizSelectedCount').textContent = count;
 
-  const cardBoya = document.getElementById('wizCardBoya');
-  if (cardBoya) cardBoya.style.borderColor = (chkBoya && loa) ? '#0ea5e9' : '#cbd5e1';
-  
-  const cardZehirli = document.getElementById('wizCardZehirli');
-  if (cardZehirli) cardZehirli.style.borderColor = (chkZehirli && loa) ? '#0ea5e9' : '#cbd5e1';
+  document.getElementById('wizCardBoya').style.borderColor    = (chkBoya && loa) ? '#0ea5e9' : '#cbd5e1';
+  document.getElementById('wizCardZehirli').style.borderColor = (chkZehirli && loa) ? '#0ea5e9' : '#cbd5e1';
 }
 
 function openWizardModal() {
@@ -2190,13 +1709,9 @@ function applyWizard() {
   const interval = document.getElementById('wizEngineInterval').value;
   const loa  = document.getElementById('wizLoa').value;
   
-  const chkEngineEl = document.getElementById('wizChkEngine');
-  const chkBoyaEl   = document.getElementById('wizChkBoya');
-  const chkZehirliEl= document.getElementById('wizChkZehirli');
-  
-  const chkEngine  = chkEngineEl ? chkEngineEl.checked : false;
-  const chkBoya    = chkBoyaEl ? chkBoyaEl.checked : false;
-  const chkZehirli = chkZehirliEl ? chkZehirliEl.checked : false;
+  const chkEngine  = document.getElementById('wizChkEngine')?.checked;
+  const chkBoya    = document.getElementById('wizChkBoya').checked;
+  const chkZehirli = document.getElementById('wizChkZehirli').checked;
 
   const clearEmpty = () => {
     if (quote.services.length === 1 && !quote.services[0].title && quote.services[0].labour.length === 0 && quote.services[0].materials.length === 0) {
@@ -2207,7 +1722,7 @@ function applyWizard() {
   // ─── Motor Bakımı ───
   if (chkEngine && model && interval && currentEngineParts.length > 0) {
     const s = newService();
-    s.title = `⚙️ ${engineBrandLabel(model)} - ${interval} Saat Bakımı`;
+    s.title = `⚙️ Volvo Penta ${model} - ${interval} Saat Bakımı`;
     const bucket = getBucketForEngine(model);
     
     if (wizPrices.ana_makina[bucket]) {
@@ -2218,7 +1733,7 @@ function applyWizard() {
     }
 
     currentEngineParts.forEach(p => {
-      s.materials.push({ id: uid(), code: p.partNumber || "", desc: p.description, qty: p.quantity, unit: p.description.includes("Yağı") || p.description.includes("Coolant") ? "LT" : "EACH", price: p.price, opt: 0 });
+      s.materials.push({ id: uid(), desc: p.description, qty: p.quantity, unit: p.description.includes("Yağı") || p.description.includes("Coolant") ? "LT" : "EACH", price: p.price, opt: 0 });
     });
     
     clearEmpty();
@@ -2254,6 +1769,3 @@ function applyWizard() {
 /* ---------- başlat ---------- */
 loadState();
 updateCrmBadge();
-</script>
-</body>
-</html>
