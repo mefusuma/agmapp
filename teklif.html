@@ -303,21 +303,6 @@
         </div>
       </div>
 
-      <!-- Motor işçilik matrisi: HP kovası bazlı oranlar -->
-      <div style="margin-top:20px;">
-        <button onclick="toggleEngineMatrix()" style="background:none; border:1px dashed #94a3b8; color:#64748b; font-size:12px; padding:7px 14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px; width:100%;">
-          <span id="engineMatrixArrow">▶</span> 🔧 Motor İşçilik Oranları <span style="margin-left:auto; font-size:11px; color:#94a3b8;">Değiştirdikte kaydedilir</span>
-        </button>
-        <div id="engineMatrixPanel" style="display:none; margin-top:12px; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; font-size:12px;">
-          <div style="background:#f1f5f9; padding:8px 14px; font-weight:700; color:#0f2438; border-bottom:1px solid #e2e8f0;">⚙️ Ana Makina Servisi — İşçilik (€)</div>
-          <div style="padding:12px; display:grid; grid-template-columns:repeat(5,1fr); gap:8px;" id="matrixAnaMakina"></div>
-          <div style="background:#f1f5f9; padding:8px 14px; font-weight:700; color:#0f2438; border-top:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0;">🌀 Impeller / Deniz Suyu Pompası — İşçilik (€) <span style="font-weight:400; color:#64748b;">· 500 ve 1000 saatte eklenir</span></div>
-          <div style="padding:12px; display:grid; grid-template-columns:repeat(5,1fr); gap:8px;" id="matrixImpeller"></div>
-          <div style="padding:10px 14px; display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e2e8f0; background:#f8fafc;">
-            <button onclick="saveWizPrices()" style="font-size:12px; background:#0ea5e9; color:#fff; border:none; padding:6px 14px; border-radius:6px; cursor:pointer;">💾 Kaydet</button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- TAB: BOYA -->
@@ -1941,33 +1926,9 @@ function selectCrmData(custId, talepId) {
 }
 
 /* ---------- Teklif Sihirbazı ---------- */
-// 351 HP üstü oranlar girilmedi (null): AGM fiyat kararı. Sihirbaz bu kovalarda
-// sessizce 0 yazmak yerine "oran girilmemiş" uyarısı verir.
-const WIZ_DEFAULTS = {
-  ana_makina: {"10-30 HP":280,"40-55 HP":380,"56-75 HP":460,"76-110 HP":560,"111-150 HP":650,"151-230 HP":780,"231-350 HP":950,"351-500 HP":null,"501-750 HP":null,"751-1000 HP":null},
-  impeller:   {"10-30 HP":60, "40-55 HP":80, "56-75 HP":90, "76-110 HP":110,"111-150 HP":130,"151-230 HP":160,"231-350 HP":200,"351-500 HP":null,"501-750 HP":null,"751-1000 HP":null},
-  pasta_cila: {"≤25 ft":100,"26-30 ft":150,"31-35 ft":250,"36-40 ft":350,"41-45 ft":450,"46-50 ft":550,"51-55 ft":650,"56-60 ft":800},
-  zehirli:    {"≤25 ft":170,"26-30 ft":250,"31-35 ft":280,"36-40 ft":350,"41-45 ft":450,"46-50 ft":550,"51-55 ft":650,"56-60 ft":800}
-};
-
-let wizPrices = loadWizPrices();
-
-function loadWizPrices() {
-  let prices = JSON.parse(JSON.stringify(WIZ_DEFAULTS));
-  try {
-    const saved = localStorage.getItem('wiz_prices');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Merge saved with defaults
-      for (let k in parsed) {
-        if (prices[k]) {
-          prices[k] = { ...prices[k], ...parsed[k] };
-        }
-      }
-    }
-  } catch(e) {}
-  return prices;
-}
+// Oran tabloları service-data.js'te (WIZ_PRICE_DEFAULTS) — tek kaynak.
+// Düzenleme yeri: Otomasyon Ayarları ekranı.
+let wizPrices = loadWizPricesFrom('wiz_prices');
 
 // Boş kutu = oran girilmemiş (null). 0'a çevirmek "işçilik 0 €" demek olurdu.
 function setWizPrice(cat, bucket, raw) {
@@ -1997,7 +1958,7 @@ function saveWizPrices() {
 
 function resetWizPrices() {
   if (!confirm('Fiyatları varsayılana döndür mek istediğinize emin misiniz?')) return;
-  wizPrices = JSON.parse(JSON.stringify(WIZ_DEFAULTS));
+  wizPrices = JSON.parse(JSON.stringify(WIZ_PRICE_DEFAULTS));
   localStorage.removeItem('wiz_prices');
   renderWizMatrix();
   updateWizPrices();
@@ -2036,14 +1997,6 @@ function toggleWizMatrix() {
   if (!isOpen) renderWizMatrix();
 }
 
-function toggleEngineMatrix() {
-  const panel = document.getElementById('engineMatrixPanel');
-  const arrow = document.getElementById('engineMatrixArrow');
-  const isOpen = panel.style.display !== 'none';
-  panel.style.display = isOpen ? 'none' : 'block';
-  arrow.textContent = isOpen ? '▶' : '▼';
-  if (!isOpen) renderWizMatrix();
-}
 
 function mapLoaToBucket(loaVal) {
   if (!loaVal) return '';
@@ -2070,7 +2023,7 @@ function switchWizTab(tabId) {
   document.getElementById('wizTab-' + tabId).style.display = 'block';
 }
 
-// Kova sınırları: üst HP -> kova adı. WIZ_DEFAULTS anahtarlarıyla birebir aynı olmalı.
+// Kova sınırları: üst HP -> kova adı. WIZ_PRICE_DEFAULTS anahtarlarıyla birebir aynı olmalı.
 const HP_BUCKETS = [
   [30,   '10-30 HP'],
   [55,   '40-55 HP'],
@@ -2171,9 +2124,10 @@ function renderWizEngineParts() {
 
   // Eksik olanları topla: teklife eksik fiyat sessizce sızmasın.
   const eksikler = [];
-  if (hp === null) eksikler.push(`<b>${esc(model)}</b> için HP tanımlı değil — işçilik kovası seçilemiyor. <code>service-data.js</code> içindeki <code>engineHp</code> alanından girin.`);
-  else if (oranYok(anaOran)) eksikler.push(`<b>${esc(bucket)}</b> kovası için ana makina işçilik oranı girilmemiş (${hp} HP). Aşağıdaki <b>🔧 Motor İşçilik Oranları</b> panelinden girin.`);
-  else if (impellerGerekli && oranYok(impOran)) eksikler.push(`<b>${esc(bucket)}</b> kovası için impeller işçilik oranı girilmemiş — <b>🔧 Motor İşçilik Oranları</b> panelinin alt yarısı.`);
+  const ayarLink = `<a href="otomasyon.html" style="color:#0369a1; font-weight:700;">⚙️ Otomasyon Ayarları</a>`;
+  if (hp === null) eksikler.push(`<b>${esc(model)}</b> için HP tanımlı değil — işçilik kovası seçilemiyor. ${ayarLink} ekranından motorun HP değerini girin.`);
+  else if (oranYok(anaOran)) eksikler.push(`<b>${esc(bucket)}</b> kovası için ana makina işçilik oranı girilmemiş (${hp} HP). ${ayarLink} ekranından girin.`);
+  else if (impellerGerekli && oranYok(impOran)) eksikler.push(`<b>${esc(bucket)}</b> kovası için impeller işçilik oranı girilmemiş. ${ayarLink} ekranından girin.`);
   if (fiyatsizParcalar.length) eksikler.push(`${fiyatsizParcalar.length} parçanın fiyatı girilmemiş: ${esc(fiyatsizParcalar.join(', '))}`);
 
   const eksikVar = eksikler.length > 0;

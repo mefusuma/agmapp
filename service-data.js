@@ -3165,3 +3165,28 @@ const SERVICE_AUTOMATION_DATA = {
 function engineBrandLabel(model) {
   return (/^D\d/.test(model) ? 'Volvo Penta ' : 'Yanmar ') + model;
 }
+
+// İşçilik oran tabloları — tek kaynak. teklif.html ve otomasyon.html buradan okur.
+// null = oran girilmemiş. 0 yazmayın: 0 EUR işçilik geçerli bir fiyat sayılır.
+const WIZ_PRICE_DEFAULTS = {
+  ana_makina: { "10-30 HP":280, "40-55 HP":380, "56-75 HP":460, "76-110 HP":560, "111-150 HP":650, "151-230 HP":780, "231-350 HP":950, "351-500 HP":null, "501-750 HP":null, "751-1000 HP":null },
+  impeller:   { "10-30 HP":60,  "40-55 HP":80,  "56-75 HP":90,  "76-110 HP":110, "111-150 HP":130, "151-230 HP":160, "231-350 HP":200, "351-500 HP":null, "501-750 HP":null, "751-1000 HP":null },
+  pasta_cila: { "≤25 ft":100, "26-30 ft":150, "31-35 ft":250, "36-40 ft":350, "41-45 ft":450, "46-50 ft":550, "51-55 ft":650, "56-60 ft":800 },
+  zehirli:    { "≤25 ft":170, "26-30 ft":250, "31-35 ft":280, "36-40 ft":350, "41-45 ft":450, "46-50 ft":550, "51-55 ft":650, "56-60 ft":800 }
+};
+
+// Kaydedilmiş oranları varsayılanla birleştirir: yeni eklenen kovalar kaybolmaz,
+// kullanıcının girdiği değerler korunur.
+function loadWizPricesFrom(storageKey) {
+  const prices = JSON.parse(JSON.stringify(WIZ_PRICE_DEFAULTS));
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey || 'wiz_prices') || 'null');
+    if (saved) for (const k in prices) if (saved[k]) prices[k] = { ...prices[k], ...saved[k] };
+  } catch (e) {}
+  return prices;
+}
+
+// Oran girilmiş mi? null/undefined/0/boş hepsi "girilmemiş".
+function oranGirilmis(v) {
+  return !(v === null || v === undefined || v === '' || v === 0);
+}

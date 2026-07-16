@@ -109,6 +109,7 @@
           <h2 id="workspaceTitle">Seçili Bakım Parçaları</h2>
           <button class="btn btn-primary btn-sm" onclick="addPartRow()">+ Yeni Parça Ekle</button>
         </div>
+        <div id="engineHpRow" style="display:flex; align-items:center; gap:10px; padding:10px 20px; border-bottom:1px solid #1e293b; background:#0f172a;"></div>
         <div style="overflow-x:auto;">
           <table>
             <thead>
@@ -174,13 +175,8 @@
   let activeModel = null;
   let activeInterval = null;
   
-  // Default values
-  const DEFAULT_MATRICES = {
-    ana_makina: {"10-30 HP":280,"40-55 HP":380,"56-75 HP":460,"76-110 HP":560,"111-150 HP":650,"151-230 HP":780,"231-350 HP":950},
-    impeller:   {"10-30 HP":60, "40-55 HP":80, "56-75 HP":90, "76-110 HP":110,"111-150 HP":130,"151-230 HP":160,"231-350 HP":200},
-    pasta_cila: {"≤25 ft":100,"26-30 ft":150,"31-35 ft":250,"36-40 ft":350,"41-45 ft":450,"46-50 ft":550,"51-55 ft":650,"56-60 ft":800},
-    zehirli:    {"≤25 ft":170,"26-30 ft":250,"31-35 ft":280,"36-40 ft":350,"41-45 ft":450,"46-50 ft":550,"51-55 ft":650,"56-60 ft":800}
-  };
+  // Oran tabloları service-data.js'te (WIZ_PRICE_DEFAULTS) — teklif.html ile ortak tek kaynak.
+  const DEFAULT_MATRICES = WIZ_PRICE_DEFAULTS;
 
   // Load configuration
   function init() {
@@ -193,20 +189,8 @@
       autData = typeof SERVICE_AUTOMATION_DATA !== 'undefined' ? JSON.parse(JSON.stringify(SERVICE_AUTOMATION_DATA)) : { schedules: {}, engineParts: {} };
     }
     
-    // Load matrices
-    const savedPrices = localStorage.getItem('wiz_prices');
-    if (savedPrices) {
-      try { wizPrices = JSON.parse(savedPrices); } catch(e) {}
-    }
-    if (!wizPrices) {
-      wizPrices = JSON.parse(JSON.stringify(DEFAULT_MATRICES));
-    } else {
-      // Merge keys just in case
-      for (let k in DEFAULT_MATRICES) {
-        if (!wizPrices[k]) wizPrices[k] = { ...DEFAULT_MATRICES[k] };
-        else wizPrices[k] = { ...DEFAULT_MATRICES[k], ...wizPrices[k] };
-      }
-    }
+    // Oranlar: varsayılan + kaydedilmiş birleşimi (teklif.html ile aynı fonksiyon)
+    wizPrices = loadWizPricesFrom('wiz_prices');
     
     renderTree();
     renderMatrices();
@@ -241,7 +225,7 @@
       return `
         <div class="tree-item-group">
           <div class="tree-model-row ${isModelActive && !activeInterval ? 'active' : ''}" onclick="selectModel('${model}')">
-            <span>⚙️ ${model}</span>
+            <span>⚙️ ${engineBrandLabel(model)}${hpEtiketi(model)}</span>
             <div style="display:flex; gap:6px;" onclick="event.stopPropagation();">
               <button class="action-icon" onclick="addInterval('${model}')" title="Bakım Saati Ekle">＋</button>
               <button class="action-icon" onclick="deleteModel('${model}')" title="Modeli Sil">✕</button>
@@ -287,7 +271,33 @@
     document.getElementById('welcomeScreen').style.display = 'none';
     document.getElementById('partsCard').style.display = 'block';
     document.getElementById('workspaceTitle').textContent = `⚙️ ${engineBrandLabel(activeModel)} - ${activeInterval} Saat Bakım Parçaları`;
+    renderHpRow();
     renderParts();
+  }
+
+  // Motorun HP'si: işçilik kovasını bu belirler. Boşsa teklif sihirbazı uyarır.
+  function renderHpRow() {
+    const el = document.getElementById('engineHpRow');
+    if (!el) return;
+    const hp = (autData.engineHp || {})[activeModel];
+    const bos = !(typeof hp === 'number' && hp > 0);
+    el.innerHTML = `
+      <label style="font-size:11px; color:${bos ? '#fb923c' : '#94a3b8'}; font-weight:600;">Motor Gücü (HP)${bos ? ' ⚠' : ''}</label>
+      <input type="number" value="${bos ? '' : hp}" placeholder="girilmedi" min="1"
+        ${bos ? 'style="border-color:#fb923c; background:#3a2718;"' : ''}
+        oninput="setEngineHp('${activeModel}', this.value)"
+        style="width:110px; ${bos ? 'border-color:#fb923c; background:#3a2718;' : ''}">
+      <span style="font-size:11px; color:#64748b;">${bos
+        ? 'HP girilmeden işçilik kovası seçilemez; teklifte işçilik 0 € kalır.'
+        : 'İşçilik kovası: <b style="color:#cbd5e1;">' + (bucketForHp(hp) || '—') + '</b>'}</span>`;
+  }
+
+  // HP -> kova. teklif.html'deki HP_BUCKETS ile aynı sınırlar.
+  function bucketForHp(hp) {
+    const B = [[30,'10-30 HP'],[55,'40-55 HP'],[75,'56-75 HP'],[110,'76-110 HP'],[150,'111-150 HP'],
+               [230,'151-230 HP'],[350,'231-350 HP'],[500,'351-500 HP'],[750,'501-750 HP'],[1000,'751-1000 HP']];
+    for (const [ust, ad] of B) if (hp <= ust) return ad;
+    return B[B.length - 1][1];
   }
 
   // Render Parts table for selected model + interval
@@ -419,6 +429,35 @@
   }
 
   // Render Price Matrices inside Right Sidebar
+  // Model listesinde HP rozeti. HP yoksa turuncu uyarı: işçilik kovası seçilemez.
+  function hpEtiketi(model) {
+    const hp = (autData.engineHp || {})[model];
+    return (typeof hp === 'number' && hp > 0)
+      ? ` <span style="color:#64748b; font-size:11px; font-weight:400;">· ${hp} HP</span>`
+      : ` <span style="color:#fb923c; font-size:11px; font-weight:600;" title="HP girilmedi — işçilik kovası seçilemiyor">· HP? ⚠</span>`;
+  }
+
+  // HP değişince kova da değişir; kaydedip listeyi ve başlığı tazele.
+  function setEngineHp(model, raw) {
+    if (!autData.engineHp) autData.engineHp = {};
+    const s = String(raw).trim();
+    autData.engineHp[model] = (s === '') ? null : (parseInt(s) || null);
+    renderTree();
+    if (activeModel && activeInterval) showPartsWorkspace();
+  }
+
+  // Boş kutu = oran girilmemiş (null). parseFloat(...)||0 kullanmıyoruz:
+  // boş bırakmak işçiliği sessizce 0 € yapardı.
+  function setMatrixPrice(key, bucket, raw, el) {
+    const s = String(raw).trim();
+    wizPrices[key][bucket] = (s === '') ? null : (parseFloat(s) || 0);
+    if (el) {
+      const bos = !oranGirilmis(wizPrices[key][bucket]);
+      el.style.borderColor = bos ? '#fb923c' : '';
+      el.style.background = bos ? '#3a2718' : '';
+    }
+  }
+
   function renderMatrices() {
     const cats = [
       { id: 'matrixPastaCila',  key: 'pasta_cila' },
@@ -431,12 +470,17 @@
       const el = document.getElementById(id);
       if (!el) return;
       
-      el.innerHTML = Object.entries(wizPrices[key]).map(([bucket, price]) => `
+      el.innerHTML = Object.entries(wizPrices[key]).map(([bucket, price]) => {
+        // Girilmemiş oran boş kutu olarak görünür. 0 yazmak "işçilik 0 €" demek olurdu.
+        const bos = !oranGirilmis(price);
+        return `
         <div class="matrix-item">
-          <label>${bucket}</label>
-          <input type="number" value="${price}" oninput="wizPrices['${key}']['${bucket}']=parseFloat(this.value)||0;">
+          <label${bos ? ' style="color:#fb923c;"' : ''}>${bucket}${bos ? ' ⚠' : ''}</label>
+          <input type="number" value="${bos ? '' : price}" placeholder="girilmedi"
+            ${bos ? 'style="border-color:#fb923c; background:#3a2718;"' : ''}
+            oninput="setMatrixPrice('${key}', '${bucket}', this.value, this)">
         </div>
-      `).join('');
+      `; }).join('');
     });
   }
 
@@ -475,7 +519,13 @@
         const data = JSON.parse(text);
         if (data.rules && data.prices) {
           autData = data.rules;
-          wizPrices = data.prices;
+          // engineHp öncesi alınmış yedekler HP taşımaz; varsayılandan tamamla.
+          if (!autData.engineHp && typeof SERVICE_AUTOMATION_DATA !== 'undefined') {
+            autData.engineHp = JSON.parse(JSON.stringify(SERVICE_AUTOMATION_DATA.engineHp || {}));
+          }
+          // Yedekte olmayan yeni kovalar (351-500 vb.) kaybolmasın.
+          wizPrices = JSON.parse(JSON.stringify(WIZ_PRICE_DEFAULTS));
+          for (const k in wizPrices) if (data.prices[k]) wizPrices[k] = { ...wizPrices[k], ...data.prices[k] };
           
           activeModel = null;
           activeInterval = null;
