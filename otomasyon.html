@@ -69,6 +69,12 @@
   .matrix-item label { font-size: 11px; color: #cbd5e1; }
   
   .toast { position: fixed; bottom: 20px; right: 20px; background: #10b981; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 500; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: none; z-index: 999; }
+  
+  /* Workshop tabs styling */
+  .workshop-tabs { display: flex; background: #1e293b; border-bottom: 1px solid #334155; overflow-x: auto; }
+  .w-tab-btn { padding: 12px 20px; font-size: 13px; font-weight: 600; color: #94a3b8; background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .w-tab-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .w-tab-btn.active { color: #0ea5e9; border-bottom-color: #0ea5e9; background: rgba(14, 165, 233, 0.08); }
 </style>
 </head>
 <body>
@@ -89,10 +95,21 @@
   </div>
 
   <!-- Layout -->
+  <!-- Workshop Tabs -->
+  <div class="workshop-tabs">
+    <button class="w-tab-btn active" id="wBtn-motor" onclick="switchWTab('motor')">⚙️ Motor / Mekanik</button>
+    <button class="w-tab-btn" id="wBtn-boya" onclick="switchWTab('boya')">🎨 Boya & Cila</button>
+    <button class="w-tab-btn" id="wBtn-elektrik" onclick="switchWTab('elektrik')">⚡ Elektrik</button>
+    <button class="w-tab-btn" id="wBtn-doseme" onclick="switchWTab('doseme')">⛵ Döşeme & Yelken</button>
+    <button class="w-tab-btn" id="wBtn-tesisat" onclick="switchWTab('tesisat')">🚰 Tesisat</button>
+    <button class="w-tab-btn" id="wBtn-polyester" onclick="switchWTab('polyester')">🧪 Polyester & GRP</button>
+  </div>
+
+  <!-- Layout -->
   <div class="main-layout">
   
-    <!-- Left Sidebar: Models & Intervals -->
-    <div class="sidebar">
+    <!-- Left Sidebar: Models & Intervals (Visible in motor tab only) -->
+    <div class="sidebar" id="motorSidebar">
       <div class="sidebar-header">
         <h3>Motor Modelleri <span id="treeCount" style="font-weight:400; color:#475569; font-size:11px;"></span></h3>
         <button class="btn btn-primary btn-sm" onclick="addModel()">+ Ekle</button>
@@ -108,8 +125,9 @@
       </div>
     </div>
     
-    <!-- Center Area: Parts List -->
-    <div class="workspace">
+    <!-- Center Area: Workspace panels -->
+    <div class="workspace" style="flex:1;">
+      <!-- Engine parts -->
       <div class="card" id="partsCard" style="display:none;">
         <div class="card-header">
           <h2 id="workspaceTitle">Seçili Bakım Parçaları</h2>
@@ -132,28 +150,173 @@
             </tbody>
           </table>
         </div>
+        
+        <!-- Job Description & Checklist Meta -->
+        <div style="margin-top:20px; border-top:1px solid #334155; padding-top:20px; display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div>
+            <label style="font-size:11.5px; color:#cbd5e1; font-weight:600; display:block; margin-bottom:6px;">📝 İşin Tanımı (Teklif Açıklamasına Yazılır)</label>
+            <textarea id="wizJobDescription" oninput="saveEngineMeta('description', this.value)" rows="3" placeholder="Bu bakımda yapılacak ana işlemler... (Örn: Motor yağı ve filtreler yenilenir, impeller kontrol edilir.)" style="background:#0f172a; border:1px solid #475569; color:#f8fafc; padding:8px; border-radius:6px; font-size:13px; width:100%; resize:vertical; font-family:inherit;"></textarea>
+          </div>
+          <div>
+            <label style="font-size:11.5px; color:#cbd5e1; font-weight:600; display:block; margin-bottom:6px;">⚠️ Uyarı Baloncuğu / Önemli Not (Sihirbazda Uyarı Olarak Gösterilir)</label>
+            <textarea id="wizJobWarning" oninput="saveEngineMeta('warning', this.value)" rows="3" placeholder="Sihirbaz ekranında turuncu uyarı balonu olarak gösterilecek not... (Örn: Kaide contası sızıntılarını kontrol etmeyi unutmayın!)" style="background:#0f172a; border:1px solid #475569; color:#f8fafc; padding:8px; border-radius:6px; font-size:13px; width:100%; resize:vertical; font-family:inherit;"></textarea>
+          </div>
+        </div>
+        <div style="margin-top:16px;">
+          <label style="font-size:11.5px; color:#cbd5e1; font-weight:600; display:block; margin-bottom:6px;">📋 Yapılacaklar / Kontrol Listesi (Teklife Yapılacaklar Listesi Olarak Eklenir - Satır Satır Yazın)</label>
+          <textarea id="wizJobChecklist" oninput="saveEngineMeta('checklist', this.value)" rows="3" placeholder="Yapılacak işlerin kontrol listesi. Her satıra bir iş yazın. Örn:&#10;Motor yağı değişimi&#10;Yağ filtresi değişimi&#10;Kayış gerginliği kontrolü" style="background:#0f172a; border:1px solid #475569; color:#f8fafc; padding:8px; border-radius:6px; font-size:13px; width:100%; resize:vertical; font-family:inherit;"></textarea>
+        </div>
       </div>
       
+      <!-- Engine Welcome screen -->
       <div id="welcomeScreen" style="display:flex; flex:1; flex-direction:column; align-items:center; justify-content:center; color:#64748b; border: 2px dashed #334155; border-radius:12px; padding:40px;">
         <span style="font-size:48px; margin-bottom:16px;">⚙️</span>
         <h3>Otomasyon Editörüne Hoş Geldiniz</h3>
         <p style="margin-top:8px; font-size:12.5px; text-align:center; max-width:400px;">Soldaki menüden düzenlemek istediğiniz motor modelini ve bakım saatini seçin veya sağ panelden işçilik fiyat matrislerini güncelleyin.</p>
       </div>
+
+      <!-- Boya & Cila LOA Matrix Panel -->
+      <div class="card" id="boyaCard" style="display:none;">
+        <div class="card-header">
+          <h2>🎨 Boya &amp; Cila Fiyat Matrisleri</h2>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+          <div>
+            <h3 style="margin-bottom:12px; color:#cbd5e1; font-size:14px; border-bottom:1px solid #334155; padding-bottom:6px; display:flex; align-items:center; gap:6px;"><span>✨</span> Borda Pasta &amp; Cila (€)</h3>
+            <div class="matrix-grid" id="boyaMatrixPastaCila" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0;"></div>
+          </div>
+          <div>
+            <h3 style="margin-bottom:12px; color:#cbd5e1; font-size:14px; border-bottom:1px solid #334155; padding-bottom:6px; display:flex; align-items:center; gap:6px;"><span>⚓</span> Zehirli Boya Uygulaması (€)</h3>
+            <div class="matrix-grid" id="boyaMatrixZehirli" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generic Workshop Packages Editor -->
+      <div id="packageCard" style="display:none; flex:1; flex-direction:column; gap:16px; min-height:450px;">
+        <!-- Sub Tab Buttons -->
+        <div style="display:flex; gap:10px; border-bottom:1px solid #334155; padding-bottom:8px;">
+          <button class="btn" id="subTabBtn-pkgs" onclick="switchWSubTab('pkgs')" style="background:#0ea5e9; color:#fff; border:none; padding:8px 16px; font-size:12px; font-weight:600; cursor:pointer; border-radius:6px;">📦 Paket Kombinasyonları</button>
+          <button class="btn" id="subTabBtn-jobs" onclick="switchWSubTab('jobs')" style="background:transparent; color:#94a3b8; border:1.5px solid #334155; padding:8px 16px; font-size:12px; font-weight:600; cursor:pointer; border-radius:6px;">📊 Standart İşçilik Matrisi</button>
+        </div>
+
+        <!-- Sub Area 1: Packages -->
+        <div id="wSubArea-pkgs" style="display:flex; flex-direction:row; gap:20px; flex:1;">
+          <!-- Left Sub-panel: Packages List -->
+          <div style="width:240px; background:#1e293b; border:1px solid #334155; border-radius:12px; display:flex; flex-direction:column; overflow:hidden;">
+          <div style="padding:14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;">
+            <h3 style="font-size:12px; text-transform:uppercase; color:#94a3b8; letter-spacing:0.05em; margin:0;">Paketler</h3>
+            <button class="btn btn-primary btn-sm" onclick="addPkg()">+ Ekle</button>
+          </div>
+          <div id="pkgList" style="flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:6px;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+        
+        <!-- Right Sub-panel: Package Details Editor -->
+        <div style="flex:1; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:20px; display:flex; flex-direction:column; gap:16px;" id="pkgEditor">
+          <div id="pkgEditorWelcome" style="display:flex; flex:1; flex-direction:column; align-items:center; justify-content:center; color:#64748b; text-align:center;">
+            <span style="font-size:36px; margin-bottom:12px;">📦</span>
+            <h4>Lütfen bir paket seçin veya yeni bir paket oluşturun.</h4>
+          </div>
+          <div id="pkgEditorContent" style="display:none; flex:1; flex-direction:column; gap:16px;">
+            <div style="display:flex; gap:12px;">
+              <div style="flex:1;">
+                <label style="font-size:11px; color:#94a3b8; font-weight:600; display:block; margin-bottom:4px;">Paket Adı</label>
+                <input type="text" id="pkgName" oninput="updatePkgMeta()" placeholder="Örn: Akü Yenileme">
+              </div>
+              <div style="width:120px; display:flex; align-items:flex-end;">
+                <button class="btn btn-danger" style="width:100%; justify-content:center; padding:8px;" onclick="deleteActivePkg()">🗑 Paketi Sil</button>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11px; color:#94a3b8; font-weight:600; display:block; margin-bottom:4px;">Paket Açıklaması</label>
+              <input type="text" id="pkgDesc" oninput="updatePkgMeta()" placeholder="Paketin yapacağı işin kısa özeti...">
+            </div>
+            
+            <div style="flex:1; display:flex; flex-direction:column; gap:10px; min-height:200px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:8px;">
+                <h3 style="font-size:13px; color:#cbd5e1; font-weight:600; margin:0;">Paket Kalemleri (Malzeme &amp; İşçilik)</h3>
+                <button class="btn btn-primary btn-sm" onclick="addPkgItemRow()">+ Satır Ekle</button>
+              </div>
+              <div style="overflow-y:auto; flex:1;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width:120px;">Türü</th>
+                      <th style="width:120px;">Parça No</th>
+                      <th>Açıklama / Kalem Adı</th>
+                      <th style="width:80px; text-align:center;">Miktar</th>
+                      <th style="width:100px; text-align:right;">Birim Fiyat (€)</th>
+                      <th style="width:50px; text-align:center;">Sil</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pkgItemsTableBody">
+                    <!-- Rendered dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+        <!-- Sub Area 2: Standard Jobs Matrix -->
+        <div id="wSubArea-jobs" style="display:none; flex-direction:column; gap:16px; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:20px; flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:12px;">
+            <div>
+              <h3 style="font-size:13px; color:#fff; font-weight:700; margin:0;">📊 Standart İşçilikler &amp; Birim Fiyat Matrisi</h3>
+              <p style="font-size:11px; color:#64748b; margin-top:2px;">Bu atölyeye ait standart iş kalemlerini ve birim işçilik fiyatlarını tanımlayın.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="addWJobRow()">+ Yeni İş Ekle</button>
+          </div>
+          <div style="overflow-y:auto; flex:1;">
+            <table>
+              <thead>
+                <tr>
+                  <th>İş Tanımı / Açıklama</th>
+                  <th style="width:180px; text-align:center;">Birim (Saat, Adet, m vb.)</th>
+                  <th style="width:150px; text-align:right;">Birim Fiyat (€)</th>
+                  <th style="width:60px; text-align:center;">Sil</th>
+                </tr>
+              </thead>
+              <tbody id="wJobsTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
     
-    <!-- Right Sidebar: bölümler MATRIX_DEFS'ten çizilir, elle eklenmez -->
-    <div class="matrix-sidebar" id="matrixSidebar"></div>
+    <!-- Right Sidebar: (Visible in motor tab only) -->
+    <div class="matrix-sidebar" id="motorMatrixSidebar">
+      <div id="matrixSidebar"></div>
+    </div>
     
   </div>
 
   <div class="toast" id="toast">Aksiyon Başarılı</div>
 
 <script>
+  function esc(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   let autData = null;
   let wizPrices = null;
   
   let activeModel = null;
   let activeInterval = null;
+  let activeWTab = 'motor';
+  let activePkgId = null;
   
   // Oran tabloları service-data.js'te (WIZ_PRICE_DEFAULTS) — teklif.html ile ortak tek kaynak.
   const DEFAULT_MATRICES = WIZ_PRICE_DEFAULTS;
@@ -169,11 +332,341 @@
       autData = typeof SERVICE_AUTOMATION_DATA !== 'undefined' ? JSON.parse(JSON.stringify(SERVICE_AUTOMATION_DATA)) : { schedules: {}, engineParts: {} };
     }
     
+    // Ensure workshopPackages structure exists
+    if (!autData.workshopPackages) {
+      autData.workshopPackages = {
+        "elektrik": [], "doseme": [], "tesisat": [], "polyester": []
+      };
+    }
+    
+    // Ensure workshopJobs structure exists
+    if (!autData.workshopJobs) {
+      autData.workshopJobs = typeof SERVICE_AUTOMATION_DATA !== 'undefined' && SERVICE_AUTOMATION_DATA.workshopJobs
+        ? JSON.parse(JSON.stringify(SERVICE_AUTOMATION_DATA.workshopJobs))
+        : { "elektrik": [], "doseme": [], "tesisat": [], "polyester": [] };
+    }
+    
     // Oranlar: varsayılan + kaydedilmiş birleşimi (teklif.html ile aynı fonksiyon)
     wizPrices = loadWizPricesFrom('wiz_prices');
     
     renderTree();
     renderMatrices();
+    switchWTab('motor');
+  }
+
+  function switchWTab(tabId) {
+    activeWTab = tabId;
+    document.querySelectorAll('.w-tab-btn').forEach(btn => btn.classList.toggle('active', btn.id === 'wBtn-' + tabId));
+    
+    // Toggle sidebars
+    document.getElementById('motorSidebar').style.display = tabId === 'motor' ? 'flex' : 'none';
+    document.getElementById('motorMatrixSidebar').style.display = tabId === 'motor' ? 'block' : 'none';
+    
+    // Toggle workspaces
+    document.getElementById('boyaCard').style.display = tabId === 'boya' ? 'block' : 'none';
+    document.getElementById('packageCard').style.display = (tabId !== 'motor' && tabId !== 'boya') ? 'flex' : 'none';
+    
+    if (tabId === 'motor') {
+      if (activeModel && activeInterval) {
+        document.getElementById('partsCard').style.display = 'block';
+        document.getElementById('welcomeScreen').style.display = 'none';
+      } else {
+        document.getElementById('partsCard').style.display = 'none';
+        document.getElementById('welcomeScreen').style.display = 'flex';
+      }
+    } else {
+      document.getElementById('partsCard').style.display = 'none';
+      document.getElementById('welcomeScreen').style.display = 'none';
+    }
+    
+    if (tabId === 'boya') {
+      renderBoyaMatrix();
+    } else if (tabId !== 'motor') {
+      // Workshop Packages
+      activePkgId = null;
+      renderPkgList();
+      renderPkgEditor();
+      switchWSubTab(activeWSubTab);
+    }
+  }
+
+  function renderBoyaMatrix() {
+    const pastaEl = document.getElementById('boyaMatrixPastaCila');
+    const zehirliEl = document.getElementById('boyaMatrixZehirli');
+    if (!pastaEl || !zehirliEl) return;
+    
+    pastaEl.innerHTML = Object.entries(wizPrices.pasta_cila || {}).map(([bucket, price]) => {
+      const bos = !oranGirilmis(price);
+      return `
+        <div class="matrix-item">
+          <label style="${bos ? 'color:#fb923c;' : 'color:#cbd5e1;'}">${bucket}${bos ? ' ⚠' : ''}</label>
+          <input type="number" value="${bos ? '' : price}" placeholder="girilmedi"
+            style="${bos ? 'border-color:#fb923c; background:#3a2718;' : ''}"
+            oninput="setMatrixPrice('pasta_cila', '${bucket}', this.value, this)">
+        </div>`;
+    }).join('');
+    
+    zehirliEl.innerHTML = Object.entries(wizPrices.zehirli || {}).map(([bucket, price]) => {
+      const bos = !oranGirilmis(price);
+      return `
+        <div class="matrix-item">
+          <label style="${bos ? 'color:#fb923c;' : 'color:#cbd5e1;'}">${bucket}${bos ? ' ⚠' : ''}</label>
+          <input type="number" value="${bos ? '' : price}" placeholder="girilmedi"
+            style="${bos ? 'border-color:#fb923c; background:#3a2718;' : ''}"
+            oninput="setMatrixPrice('zehirli', '${bucket}', this.value, this)">
+        </div>`;
+    }).join('');
+  }
+
+  let activeWSubTab = 'pkgs';
+  
+  function switchWSubTab(subTabId) {
+    activeWSubTab = subTabId;
+    const isPkgs = subTabId === 'pkgs';
+    const pkgsArea = document.getElementById('wSubArea-pkgs');
+    const jobsArea = document.getElementById('wSubArea-jobs');
+    if (pkgsArea) pkgsArea.style.display = isPkgs ? 'flex' : 'none';
+    if (jobsArea) jobsArea.style.display = isPkgs ? 'none' : 'flex';
+    
+    const pkgsBtn = document.getElementById('subTabBtn-pkgs');
+    const jobsBtn = document.getElementById('subTabBtn-jobs');
+    
+    if (pkgsBtn && jobsBtn) {
+      if (isPkgs) {
+        pkgsBtn.style.background = '#0ea5e9';
+        pkgsBtn.style.color = '#fff';
+        pkgsBtn.style.border = 'none';
+        
+        jobsBtn.style.background = 'transparent';
+        jobsBtn.style.color = '#94a3b8';
+        jobsBtn.style.border = '1.5px solid #334155';
+      } else {
+        jobsBtn.style.background = '#0ea5e9';
+        jobsBtn.style.color = '#fff';
+        jobsBtn.style.border = 'none';
+        
+        pkgsBtn.style.background = 'transparent';
+        pkgsBtn.style.color = '#94a3b8';
+        pkgsBtn.style.border = '1.5px solid #334155';
+        
+        renderWJobsList();
+      }
+    }
+  }
+
+  function getActiveWorkshopJobs() {
+    if (!autData.workshopJobs) autData.workshopJobs = {};
+    if (!autData.workshopJobs[activeWTab]) autData.workshopJobs[activeWTab] = [];
+    return autData.workshopJobs[activeWTab];
+  }
+
+  function renderWJobsList() {
+    const tbody = document.getElementById('wJobsTableBody');
+    if (!tbody) return;
+    const jobs = getActiveWorkshopJobs();
+    
+    if (jobs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748b; padding:20px;">Kayıtlı standart işçilik yok. "+ Yeni İş Ekle" butonuna basarak ekleyebilirsiniz.</td></tr>`;
+      return;
+    }
+    
+    tbody.innerHTML = jobs.map((job, idx) => `
+      <tr>
+        <td>
+          <input type="text" value="${esc(job.name || '')}" placeholder="Örn: Akü Montajı ve Kablolama" oninput="updateWJob(${idx}, 'name', this.value)" style="width:100%;">
+        </td>
+        <td>
+          <input type="text" value="${esc(job.unit || 'Saat')}" placeholder="Örn: Saat, Adet, m" oninput="updateWJob(${idx}, 'unit', this.value)" style="text-align:center; width:100%;">
+        </td>
+        <td>
+          <input type="number" value="${job.price || 0}" placeholder="0" oninput="updateWJob(${idx}, 'price', this.value)" style="text-align:right; width:100%;">
+        </td>
+        <td style="text-align:center;">
+          <button class="btn btn-danger btn-icon" onclick="deleteWJob(${idx})" style="padding:4px 8px;">✕</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function addWJobRow() {
+    const jobs = getActiveWorkshopJobs();
+    jobs.push({
+      name: 'Yeni Standart İş',
+      unit: 'Saat',
+      price: 50
+    });
+    renderWJobsList();
+  }
+
+  function updateWJob(idx, field, val) {
+    const jobs = getActiveWorkshopJobs();
+    if (!jobs[idx]) return;
+    if (field === 'price') {
+      jobs[idx][field] = parseFloat(val) || 0;
+    } else {
+      jobs[idx][field] = val;
+    }
+  }
+
+  function deleteWJob(idx) {
+    const jobs = getActiveWorkshopJobs();
+    jobs.splice(idx, 1);
+    renderWJobsList();
+  }
+
+  function getActiveWorkshopPackages() {
+    if (!autData.workshopPackages) autData.workshopPackages = {};
+    if (!autData.workshopPackages[activeWTab]) autData.workshopPackages[activeWTab] = [];
+    return autData.workshopPackages[activeWTab];
+  }
+  
+  function renderPkgList() {
+    const listEl = document.getElementById('pkgList');
+    if (!listEl) return;
+    const pkgs = getActiveWorkshopPackages();
+    
+    if (pkgs.length === 0) {
+      listEl.innerHTML = '<div style="padding:20px; text-align:center; color:#475569; font-size:12px;">Kayıtlı paket yok.</div>';
+      return;
+    }
+    
+    listEl.innerHTML = pkgs.map(p => `
+      <div onclick="selectPkg('${p.id}')" style="padding:10px 12px; border-radius:6px; background:${activePkgId === p.id ? 'rgba(14, 165, 233, 0.15)' : 'rgba(255,255,255,0.02)'}; border:1px solid ${activePkgId === p.id ? '#0ea5e9' : 'rgba(255,255,255,0.05)'}; cursor:pointer; color:${activePkgId === p.id ? '#fff' : '#cbd5e1'}; font-weight:${activePkgId === p.id ? '600' : '400'}; transition:all 0.2s;">
+        <div style="font-size:13px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${p.name || 'İsimsiz Paket'}</div>
+        <div style="font-size:10px; color:#64748b; margin-top:2px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${p.items?.length || 0} kalem</div>
+      </div>
+    `).join('');
+  }
+  
+  function selectPkg(pkgId) {
+    activePkgId = pkgId;
+    renderPkgList();
+    renderPkgEditor();
+  }
+  
+  function addPkg() {
+    const pkgs = getActiveWorkshopPackages();
+    const newPkg = {
+      id: 'pkg_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+      name: 'Yeni Paket',
+      description: 'Yeni paket açıklaması',
+      items: []
+    };
+    pkgs.push(newPkg);
+    activePkgId = newPkg.id;
+    renderPkgList();
+    renderPkgEditor();
+    toast('Paket oluşturuldu.');
+  }
+  
+  function deleteActivePkg() {
+    if (!confirm('Bu paketi silmek istediğinize emin misiniz?')) return;
+    const pkgs = getActiveWorkshopPackages();
+    const idx = pkgs.findIndex(p => p.id === activePkgId);
+    if (idx > -1) {
+      pkgs.splice(idx, 1);
+      activePkgId = null;
+      renderPkgList();
+      renderPkgEditor();
+      toast('Paket silindi.');
+    }
+  }
+  
+  function renderPkgEditor() {
+    const welcome = document.getElementById('pkgEditorWelcome');
+    const content = document.getElementById('pkgEditorContent');
+    if (!welcome || !content) return;
+    
+    const pkgs = getActiveWorkshopPackages();
+    const pkg = pkgs.find(p => p.id === activePkgId);
+    
+    if (!pkg) {
+      welcome.style.display = 'flex';
+      content.style.display = 'none';
+      return;
+    }
+    
+    welcome.style.display = 'none';
+    content.style.display = 'flex';
+    
+    document.getElementById('pkgName').value = pkg.name || '';
+    document.getElementById('pkgDesc').value = pkg.description || '';
+    
+    renderPkgItems(pkg);
+  }
+  
+  function updatePkgMeta() {
+    const pkgs = getActiveWorkshopPackages();
+    const pkg = pkgs.find(p => p.id === activePkgId);
+    if (!pkg) return;
+    pkg.name = document.getElementById('pkgName').value.trim();
+    pkg.description = document.getElementById('pkgDesc').value.trim();
+    renderPkgList();
+  }
+  
+  function renderPkgItems(pkg) {
+    const tbody = document.getElementById('pkgItemsTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = (pkg.items || []).map((item, idx) => `
+      <tr>
+        <td>
+          <select style="padding:4px; font-size:12.5px;" onchange="updatePkgItemField(${idx}, 'type', this.value)">
+            <option value="malzeme" ${item.type === 'malzeme' ? 'selected' : ''}>Malzeme</option>
+            <option value="iscilik" ${item.type === 'iscilik' ? 'selected' : ''}>İşçilik</option>
+          </select>
+        </td>
+        <td>
+          <input value="${item.partNumber || ''}" placeholder="Parça No" style="padding:4px; font-size:12.5px;" onchange="updatePkgItemField(${idx}, 'partNumber', this.value)">
+        </td>
+        <td>
+          <input value="${item.description || ''}" placeholder="Açıklama" style="padding:4px; font-size:12.5px;" onchange="updatePkgItemField(${idx}, 'description', this.value)">
+        </td>
+        <td style="text-align:center;">
+          <input type="number" value="${item.quantity || 1}" style="text-align:center; padding:4px; font-size:12.5px;" onchange="updatePkgItemField(${idx}, 'quantity', parseInt(this.value)||1)">
+        </td>
+        <td style="text-align:right;">
+          <input type="number" step="0.01" value="${item.price || 0}" style="text-align:right; padding:4px; font-size:12.5px;" onchange="updatePkgItemField(${idx}, 'price', parseFloat(this.value)||0)">
+        </td>
+        <td style="text-align:center;">
+          <button class="btn btn-danger btn-sm" onclick="deletePkgItemRow(${idx})">✕</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+  
+  function updatePkgItemField(idx, field, val) {
+    const pkgs = getActiveWorkshopPackages();
+    const pkg = pkgs.find(p => p.id === activePkgId);
+    if (pkg && pkg.items && pkg.items[idx]) {
+      pkg.items[idx][field] = val;
+    }
+  }
+  
+  function addPkgItemRow() {
+    const pkgs = getActiveWorkshopPackages();
+    const pkg = pkgs.find(p => p.id === activePkgId);
+    if (!pkg) return;
+    if (!pkg.items) pkg.items = [];
+    
+    pkg.items.push({
+      type: 'malzeme',
+      partNumber: '',
+      description: 'Yeni Kalem',
+      quantity: 1,
+      price: 0
+    });
+    
+    renderPkgItems(pkg);
+  }
+  
+  function deletePkgItemRow(idx) {
+    const pkgs = getActiveWorkshopPackages();
+    const pkg = pkgs.find(p => p.id === activePkgId);
+    if (pkg && pkg.items) {
+      pkg.items.splice(idx, 1);
+      renderPkgItems(pkg);
+    }
   }
 
   function toast(msg, type = "success") {
@@ -308,6 +801,19 @@
     document.getElementById('workspaceTitle').textContent = `⚙️ ${engineBrandLabel(activeModel)} - ${activeInterval} Saat Bakım Parçaları`;
     renderHpRow();
     renderParts();
+
+    const meta = (autData.engineMeta?.[activeModel]?.[`interval_${activeInterval}`]) || {};
+    document.getElementById('wizJobDescription').value = meta.description || '';
+    document.getElementById('wizJobWarning').value = meta.warning || '';
+    document.getElementById('wizJobChecklist').value = meta.checklist || '';
+  }
+
+  function saveEngineMeta(field, val) {
+    if (!autData.engineMeta) autData.engineMeta = {};
+    if (!autData.engineMeta[activeModel]) autData.engineMeta[activeModel] = {};
+    const key = `interval_${activeInterval}`;
+    if (!autData.engineMeta[activeModel][key]) autData.engineMeta[activeModel][key] = {};
+    autData.engineMeta[activeModel][key][field] = val;
   }
 
   // Motorun HP'si: işçilik kovasını bu belirler. Boşsa teklif sihirbazı uyarır.
@@ -603,16 +1109,26 @@
           if (!autData.engineHp && typeof SERVICE_AUTOMATION_DATA !== 'undefined') {
             autData.engineHp = JSON.parse(JSON.stringify(SERVICE_AUTOMATION_DATA.engineHp || {}));
           }
+          // workshopPackages fallback
+          if (!autData.workshopPackages) {
+            autData.workshopPackages = typeof SERVICE_AUTOMATION_DATA !== 'undefined' && SERVICE_AUTOMATION_DATA.workshopPackages
+              ? JSON.parse(JSON.stringify(SERVICE_AUTOMATION_DATA.workshopPackages))
+              : { "elektrik": [], "doseme": [], "tesisat": [], "polyester": [] };
+          }
+          if (!autData.engineMeta) {
+            autData.engineMeta = {};
+          }
           // Yedekte olmayan yeni kovalar (351-500 vb.) kaybolmasın.
           wizPrices = JSON.parse(JSON.stringify(WIZ_PRICE_DEFAULTS));
           for (const k in wizPrices) if (data.prices[k]) wizPrices[k] = { ...wizPrices[k], ...data.prices[k] };
           
           activeModel = null;
           activeInterval = null;
+          activePkgId = null;
           
           renderTree();
           renderMatrices();
-          showWelcomeScreen();
+          switchWTab(activeWTab);
           
           toast("Ayarlar yedek dosyasından başarıyla yüklendi!");
         } else {
