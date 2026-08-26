@@ -60,6 +60,18 @@
   .row-line.drag-over { border-top: 2px solid #38bdf8; }
   .row-line[draggable="true"] { cursor: grab; }
   .row-line[draggable="true"]:active { cursor: grabbing; }
+  /* Dar ekran: üst menü 8 butonu sarmalayıp ekranın yarısını yiyordu.
+     Yazılar gizlenir, ikonlar kalır; menü tek satıra iner. */
+  @media (max-width: 620px) {
+    .topbar { padding: 6px 8px; gap: 6px; flex-wrap: wrap; }
+    .topbar h1 { font-size: 12px; letter-spacing: .04em; }
+    .topbar .sub { display: none; }
+    .btn-label { display: none; }
+    .topbar .btn { padding: 6px 8px; font-size: 15px; line-height: 1; }
+    .topbar > div[style*="border-left"] { padding-left: 8px !important; }
+    .topbar > div[style*="margin-left:auto"] { gap: 4px !important; }
+  }
+
   /* Dar ekran: sabit 8 sütunlu grid açıklamayı sıfıra eziyordu. Açıklama tam
      genişlik kendi satırına, küçük sayı kutuları alt satıra akıyor. */
   @media (max-width: 620px) {
@@ -67,12 +79,13 @@
     .row-line input { padding: 9px 8px; font-size: 14px; }
     .row-line > input[data-item$="|desc"] { order: -1; flex: 1 1 100%; }
     .row-line > .opt-btn { order: 1; flex: 0 0 auto; }
-    .row-line > input[data-item$="|code"]  { order: 2; flex: 2 1 66px; min-width: 60px; }
-    .row-line > input[data-item$="|qty"]   { order: 3; flex: 1 1 42px; min-width: 40px; }
-    .row-line > input[data-item$="|unit"]  { order: 4; flex: 1 1 46px; min-width: 42px; }
-    .row-line > input[data-item$="|price"] { order: 5; flex: 1 1 58px; min-width: 52px; }
-    .row-line > .sub { order: 6; flex: 0 1 auto; margin-left: auto; min-width: 48px; text-align: right; }
-    .row-line > .del { order: 7; flex: 0 0 auto; }
+    .row-line > input[data-item$="|code"]  { order: 2; flex: 2 1 54px; min-width: 48px; }
+    .row-line > input[data-item$="|qty"]   { order: 3; flex: 1 1 36px; min-width: 34px; }
+    .row-line > input[data-item$="|unit"]  { order: 4; flex: 1 1 40px; min-width: 36px; }
+    .row-line > input[data-item$="|price"] { order: 5; flex: 1 1 50px; min-width: 46px; }
+    /* margin-left:auto burada ✕'i alt satıra itiyordu; sub esneyerek boşluğu doldurur. */
+    .row-line > .sub { order: 6; flex: 1 1 44px; min-width: 40px; text-align: right; font-size: 12px; }
+    .row-line > .del { order: 7; flex: 0 0 auto; padding: 0 2px; }
   }
   .row-line .sub { text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
   .row-line .del, .row-line .opt-btn { background: none; border: none; font-size: 14px; cursor: pointer; }
@@ -151,12 +164,12 @@
     <button class="btn btn-ghost btn-sm" onclick="undo()" title="Geri Al (Ctrl+Z)" style="padding:6px 8px; font-size:14px">↩</button>
     <button class="btn btn-ghost btn-sm" onclick="redo()" title="İleri Al (Ctrl+Y)" style="padding:6px 8px; font-size:14px">↪</button>
     <div style="width:1px; height:24px; background:#2c4a66; margin:0 4px;"></div>
-    <button class="btn btn-primary btn-sm" style="background:#0ea5e9" onclick="saveDraft()">💾 Kaydet</button>
-    <button class="btn btn-ghost btn-sm" onclick="openDrafts()">📂 Taslaklar</button>
-    <a href="otomasyon.html" class="btn btn-ghost btn-sm" style="text-decoration:none; color:#b8c9d9; display:inline-flex; align-items:center; gap:4px;">⚙️ Otomasyon Ayarları</a>
+    <button class="btn btn-primary btn-sm" style="background:#0ea5e9" onclick="saveDraft()" title="Kaydet">💾<span class="btn-label"> Kaydet</span></button>
+    <button class="btn btn-ghost btn-sm" onclick="openDrafts()" title="Taslaklar">📂<span class="btn-label"> Taslaklar</span></button>
+    <a href="otomasyon.html" class="btn btn-ghost btn-sm" title="Otomasyon Ayarları" style="text-decoration:none; color:#b8c9d9; display:inline-flex; align-items:center; gap:4px;">⚙️<span class="btn-label"> Otomasyon Ayarları</span></a>
     <input type="file" id="importFile" accept=".xlsx" style="display:none" onchange="importXlsx(event)">
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">📥 İçeri Aktar</button>
-    <button class="btn btn-primary btn-sm" onclick="openCrmModal()" style="background:#f59e0b; position:relative;">📥 CRM'den Çek<span id="crmBadge" style="display:none; position:absolute; top:-7px; right:-7px; background:#ef4444; color:#fff; border-radius:999px; min-width:18px; height:18px; line-height:18px; font-size:11px; font-weight:700; text-align:center; padding:0 4px; box-shadow:0 1px 4px rgba(0,0,0,.35);"></span></button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()" title="İçeri Aktar">📥<span class="btn-label"> İçeri Aktar</span></button>
+    <button class="btn btn-primary btn-sm" onclick="openCrmModal()" title="CRM'den Çek" style="background:#f59e0b; position:relative;">📥<span class="btn-label"> CRM'den Çek</span><span id="crmBadge" style="display:none; position:absolute; top:-7px; right:-7px; background:#ef4444; color:#fff; border-radius:999px; min-width:18px; height:18px; line-height:18px; font-size:11px; font-weight:700; text-align:center; padding:0 4px; box-shadow:0 1px 4px rgba(0,0,0,.35);"></span></button>
   </div>
   <div class="page-tabs">
     <button class="page-tab-btn active" data-tab="teklif" onclick="showTab('teklif')">Teklif</button>
