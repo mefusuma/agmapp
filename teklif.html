@@ -60,7 +60,20 @@
   .row-line.drag-over { border-top: 2px solid #38bdf8; }
   .row-line[draggable="true"] { cursor: grab; }
   .row-line[draggable="true"]:active { cursor: grabbing; }
-  @media (max-width: 620px) { .row-line { grid-template-columns: 20px 80px 1fr 44px 50px 70px 70px 22px; } .row-line input { padding: 7px 6px; font-size: 13px; } }
+  /* Dar ekran: sabit 8 sütunlu grid açıklamayı sıfıra eziyordu. Açıklama tam
+     genişlik kendi satırına, küçük sayı kutuları alt satıra akıyor. */
+  @media (max-width: 620px) {
+    .row-line { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 7px 0; }
+    .row-line input { padding: 9px 8px; font-size: 14px; }
+    .row-line > input[data-item$="|desc"] { order: -1; flex: 1 1 100%; }
+    .row-line > .opt-btn { order: 1; flex: 0 0 auto; }
+    .row-line > input[data-item$="|code"]  { order: 2; flex: 2 1 66px; min-width: 60px; }
+    .row-line > input[data-item$="|qty"]   { order: 3; flex: 1 1 42px; min-width: 40px; }
+    .row-line > input[data-item$="|unit"]  { order: 4; flex: 1 1 46px; min-width: 42px; }
+    .row-line > input[data-item$="|price"] { order: 5; flex: 1 1 58px; min-width: 52px; }
+    .row-line > .sub { order: 6; flex: 0 1 auto; margin-left: auto; min-width: 48px; text-align: right; }
+    .row-line > .del { order: 7; flex: 0 0 auto; }
+  }
   .row-line .sub { text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
   .row-line .del, .row-line .opt-btn { background: none; border: none; font-size: 14px; cursor: pointer; }
   .row-line .del { color: #cbd5e1; font-size: 15px; }
