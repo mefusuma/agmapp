@@ -121,7 +121,7 @@
   .draft-item:hover { background: #f8fafc; }
   .catalog-modal { position: fixed; z-index: 50; background: #fff; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(500px, 94vw); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.3); display: none; }
   .catalog-modal.open { display: block; }
-  #wizardModal.open { display: flex; }
+  #wizardModal.open { display: flex !important; }
   .modal-header { padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; }
   .catalog-list { padding: 16px; max-height: 70vh; overflow-y: auto; }
 </style>
@@ -233,7 +233,7 @@
 </div>
 
 <div class="overlay" id="wizardOverlay" onclick="closeWizardModal()"></div>
-<div class="catalog-modal" id="wizardModal" style="width: min(780px, 96vw); padding:0; border-radius:14px; overflow:hidden; max-height:92vh; flex-direction:column;">
+<div class="catalog-modal" id="wizardModal" style="width: min(780px, 96vw); height: 92vh; max-height: 850px; padding:0; border-radius:14px; overflow:hidden; flex-direction:column;">
 
   <!-- Header -->
   <div style="background:linear-gradient(135deg,#0f2438 0%,#1273b8 100%); padding:18px 20px; display:flex; align-items:center; justify-content:space-between;">
@@ -259,17 +259,18 @@
         <div id="wizCrmLoa" style="font-weight:700; color:#0f2438;">—</div>
       </div>
       <div style="text-align:center;">
-        <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:.05em;">Motor Tipi</div>
+        <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:.05em;">Motor Detayı</div>
         <div id="wizCrmMotorType" style="font-weight:700; color:#0f2438;">—</div>
       </div>
     </div>
   </div>
-
-  <!-- Tabs Header -->
   <div style="display:flex; background:#f1f5f9; border-bottom:1px solid #e2e8f0; overflow-x:auto;">
-    <button class="wiz-tab-btn active" onclick="switchWizTab('motor')" id="wizTabBtn-motor">⚙️ Motor & Mekanik</button>
-    <button class="wiz-tab-btn" onclick="switchWizTab('boya')" id="wizTabBtn-boya">🎨 Gövde & Boya</button>
-    <button class="wiz-tab-btn" onclick="switchWizTab('ekipman')" id="wizTabBtn-ekipman">⚡ Ekipman (Jen vb.)</button>
+    <button class="wiz-tab-btn active" onclick="switchWizTab('motor')" id="wizTabBtn-motor">⚙️ Motor / Mekanik</button>
+    <button class="wiz-tab-btn" onclick="switchWizTab('boya')" id="wizTabBtn-boya">🎨 Boya & Cila</button>
+    <button class="wiz-tab-btn" onclick="switchWizTab('elektrik')" id="wizTabBtn-elektrik">⚡ Elektrik</button>
+    <button class="wiz-tab-btn" onclick="switchWizTab('doseme')" id="wizTabBtn-doseme">⛵ Döşeme &amp; Yelken</button>
+    <button class="wiz-tab-btn" onclick="switchWizTab('tesisat')" id="wizTabBtn-tesisat">🚰 Tesisat</button>
+    <button class="wiz-tab-btn" onclick="switchWizTab('polyester')" id="wizTabBtn-polyester">🧪 Polyester &amp; GRP</button>
   </div>
 
   <div style="padding:20px; background:#f8fafc; overflow-y:auto; flex:1;" id="wizTabsContainer">
@@ -362,14 +363,81 @@
       </div>
     </div>
 
-    <!-- TAB: EKIPMAN -->
-    <div class="wiz-tab-content" id="wizTab-ekipman" style="display:none;">
-      <div style="text-align:center; padding:30px; color:#94a3b8; font-size:13px; border:1px dashed #cbd5e1; border-radius:8px;">
-        Jeneratör, Su Yapıcı vb. modüller yakında eklenecektir.<br>Şimdilik boş.
+    <!-- TAB: ELEKTRİK -->
+    <div class="wiz-tab-content" id="wizTab-elektrik" style="display:none;">
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:20px; align-items:start;">
+        <div>
+          <div class="field" style="margin-bottom:16px;">
+            <label style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Elektrik Otomasyon Paketleri</label>
+            <select id="wizPkgSelect-elektrik" style="margin-top:4px;" onchange="renderWizPkgPreview('elektrik')">
+              <option value="">Seçiniz...</option>
+            </select>
+          </div>
+          <div id="wizPkgPreview-elektrik"></div>
+        </div>
+        <div style="border-left:1px solid #e2e8f0; padding-left:20px; min-height:220px;">
+          <label style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase; display:block; margin-bottom:12px;">📊 Standart İşçilik Kalemleri Matrisi</label>
+          <div id="wizJobsContainer-elektrik" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
       </div>
     </div>
 
-  </div>
+    <!-- TAB: DÖŞEME & YELKEN -->
+    <div class="wiz-tab-content" id="wizTab-doseme" style="display:none;">
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:20px; align-items:start;">
+        <div>
+          <div class="field" style="margin-bottom:16px;">
+            <label style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Döşeme &amp; Yelken Otomasyon Paketleri</label>
+            <select id="wizPkgSelect-doseme" style="margin-top:4px;" onchange="renderWizPkgPreview('doseme')">
+              <option value="">Seçiniz...</option>
+            </select>
+          </div>
+          <div id="wizPkgPreview-doseme"></div>
+        </div>
+        <div style="border-left:1px solid #e2e8f0; padding-left:20px; min-height:220px;">
+          <label style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase; display:block; margin-bottom:12px;">📊 Standart İşçilik Kalemleri Matrisi</label>
+          <div id="wizJobsContainer-doseme" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: TESİSAT -->
+    <div class="wiz-tab-content" id="wizTab-tesisat" style="display:none;">
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:20px; align-items:start;">
+        <div>
+          <div class="field" style="margin-bottom:16px;">
+            <label style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Tesisat Otomasyon Paketleri</label>
+            <select id="wizPkgSelect-tesisat" style="margin-top:4px;" onchange="renderWizPkgPreview('tesisat')">
+              <option value="">Seçiniz...</option>
+            </select>
+          </div>
+          <div id="wizPkgPreview-tesisat"></div>
+        </div>
+        <div style="border-left:1px solid #e2e8f0; padding-left:20px; min-height:220px;">
+          <label style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase; display:block; margin-bottom:12px;">📊 Standart İşçilik Kalemleri Matrisi</label>
+          <div id="wizJobsContainer-tesisat" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: POLYESTER & GRP -->
+    <div class="wiz-tab-content" id="wizTab-polyester" style="display:none;">
+      <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:20px; align-items:start;">
+        <div>
+          <div class="field" style="margin-bottom:16px;">
+            <label style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Polyester &amp; GRP Otomasyon Paketleri</label>
+            <select id="wizPkgSelect-polyester" style="margin-top:4px;" onchange="renderWizPkgPreview('polyester')">
+              <option value="">Seçiniz...</option>
+            </select>
+          </div>
+          <div id="wizPkgPreview-polyester"></div>
+        </div>
+        <div style="border-left:1px solid #e2e8f0; padding-left:20px; min-height:220px;">
+          <label style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase; display:block; margin-bottom:12px;">📊 Standart İşçilik Kalemleri Matrisi</label>
+          <div id="wizJobsContainer-polyester" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+      </div>
+    </div>  </div>
 
   <!-- Footer -->
   <div style="padding:16px 20px; border-top:1px solid #e2e8f0; background:#fff;">
@@ -631,6 +699,11 @@ function getTabLabel(tab) {
 }
 
 function renderQuoteTabs() {
+  const cur = tabs.find(t => t.id === activeTabId);
+  if (cur && typeof quote !== 'undefined') {
+    cur.quote = JSON.parse(JSON.stringify(quote));
+  }
+
   const bar = document.getElementById('quoteTabsBar');
   const addBtn = bar.querySelector('.quote-tab-add');
   bar.querySelectorAll('.quote-tab').forEach(el => el.remove());
@@ -1898,12 +1971,15 @@ function selectCrmData(custId, talepId) {
   quote.customer.flag = cust.bayrak || '';
   // Ekstra bilgileri (boy ve motor) de arka planda saklayalım
   quote.customer.loa = cust.tekneBoyu || '';
+  quote.customer.motor_model = (cust.motorlar && cust.motorlar.length > 0) ? cust.motorlar[0].model : '';
   quote.customer.motor_hp = (cust.motorlar && cust.motorlar.length > 0) ? cust.motorlar[0].hp : '';
   quote.customer.kuyruk = (cust.motorlar && cust.motorlar.length > 0) ? cust.motorlar[0].tahrik : '';
   
+  let textToScan = '';
   if (talepId && cust.talepler) {
     const talep = cust.talepler.find(t => t.id === talepId);
     if (talep) {
+       textToScan = (talep.aciklama || '') + ' ' + (talep.notlar || '');
        const s = newService();
        s.title = (CRM_TUR_LABEL[talep.tur] || talep.tur || 'Talep') + (talep.aciklama ? ': ' + talep.aciklama : '');
        s.notes = talep.notlar || '';
@@ -1913,6 +1989,18 @@ function selectCrmData(custId, talepId) {
        quote.services.push(s);
     }
   }
+  
+  const detectIntervalFromText = (text) => {
+    if (!text) return '';
+    const cleanText = text.toLowerCase();
+    if (cleanText.includes('1000') || cleanText.includes('bin saat')) return '1000';
+    if (cleanText.includes('500') || cleanText.includes('beş yüz saat')) return '500';
+    if (cleanText.includes('250') || cleanText.includes('iki yüz elli saat')) return '250';
+    if (cleanText.includes('100') || cleanText.includes('yüz saat')) return '100';
+    if (cleanText.includes('50') || cleanText.includes('elli saat')) return '50';
+    return '';
+  };
+  quote.customer.detected_interval = detectIntervalFromText(textToScan);
   
   const activeTab = tabs.find(t => t.id === activeTabId);
   if (activeTab) {
@@ -2053,11 +2141,27 @@ function getBucketForEngine(model) {
 }
 
 function getAutomationData() {
+  let data = null;
   try {
     const saved = localStorage.getItem('service_automation_rules');
-    if (saved) return JSON.parse(saved);
+    if (saved) data = JSON.parse(saved);
   } catch(e) {}
-  return typeof SERVICE_AUTOMATION_DATA !== 'undefined' ? SERVICE_AUTOMATION_DATA : { schedules: {}, engineParts: {} };
+  if (!data) {
+    data = typeof SERVICE_AUTOMATION_DATA !== 'undefined' ? JSON.parse(JSON.stringify(SERVICE_AUTOMATION_DATA)) : { schedules: {}, engineParts: {} };
+  }
+  // Ensure workshopJobs structure exists
+  if (!data.workshopJobs) {
+    data.workshopJobs = typeof SERVICE_AUTOMATION_DATA !== 'undefined' && SERVICE_AUTOMATION_DATA.workshopJobs
+      ? JSON.parse(JSON.stringify(SERVICE_AUTOMATION_DATA.workshopJobs))
+      : { "elektrik": [], "doseme": [], "tesisat": [], "polyester": [] };
+  }
+  // Ensure workshopPackages structure exists
+  if (!data.workshopPackages) {
+    data.workshopPackages = typeof SERVICE_AUTOMATION_DATA !== 'undefined' && SERVICE_AUTOMATION_DATA.workshopPackages
+      ? JSON.parse(JSON.stringify(SERVICE_AUTOMATION_DATA.workshopPackages))
+      : { "elektrik": [], "doseme": [], "tesisat": [], "polyester": [] };
+  }
+  return data;
 }
 
 function renderWizEngineOptions() {
@@ -2085,6 +2189,12 @@ function renderWizEngineParts() {
   const data = getAutomationData();
   const partsObj = data.engineParts[model];
   const parts = partsObj ? (partsObj[`interval_${interval}`] || []) : [];
+  
+  const meta = (data.engineMeta?.[model]?.[`interval_${interval}`]) || {};
+  const jobDesc = meta.description || '';
+  const jobWarning = meta.warning || '';
+  const jobChecklist = meta.checklist || '';
+
   let partsTotal = 0;
   let html = `<div style="background:#fff; border:2px solid #0ea5e9; border-radius:10px; padding:16px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -2092,8 +2202,36 @@ function renderWizEngineParts() {
       <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer;">
         <input type="checkbox" id="wizChkEngine" checked onchange="updateWizPrices()" style="width:16px;height:16px;accent-color:#0ea5e9;"> Teklife Ekle
       </label>
-    </div>
-    <table style="width:100%; font-size:12px; border-collapse:collapse; margin-bottom:12px;">
+    </div>`;
+
+  if (jobWarning) {
+    html += `<div style="margin-bottom:12px; padding:10px 14px; background:#fff7ed; border:1px solid #fdba74; border-radius:8px; display:flex; align-items:flex-start; gap:8px;">
+      <span style="font-size:16px;">⚠️</span>
+      <div style="font-size:12px; color:#c2410c; font-weight:600; line-height:1.4;">
+        ${esc(jobWarning)}
+      </div>
+    </div>`;
+  }
+
+  if (jobDesc) {
+    html += `<div style="font-size:12px; color:#475569; margin-bottom:12px; background:#f1f5f9; padding:8px 12px; border-radius:6px; border-left:3px solid #0ea5e9;">
+      <b>İş Tanımı:</b> ${esc(jobDesc)}
+    </div>`;
+  }
+
+  if (jobChecklist) {
+    const listItems = jobChecklist.split('\n').map(x => x.trim()).filter(Boolean);
+    if (listItems.length > 0) {
+      html += `<div style="font-size:12px; color:#475569; margin-bottom:12px; background:#f8fafc; border:1px solid #e2e8f0; padding:10px 12px; border-radius:8px;">
+        <div style="font-weight:700; color:#0f2438; margin-bottom:6px; font-size:11px; text-transform:uppercase; letter-spacing:0.05em;">📋 Yapılacaklar Kontrol Listesi</div>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          ${listItems.map(item => `<div style="display:flex; align-items:center; gap:6px;"><input type="checkbox" checked disabled style="accent-color:#0ea5e9;"> <span>${esc(item)}</span></div>`).join('')}
+        </div>
+      </div>`;
+    }
+  }
+
+  html += `<table style="width:100%; font-size:12px; border-collapse:collapse; margin-bottom:12px;">
       <tr style="border-bottom:1px solid #e2e8f0; color:#64748b;">
         <th style="text-align:left; padding-bottom:6px;">Parça / İşlem</th>
         <th style="text-align:center; padding-bottom:6px;">Miktar</th>
@@ -2186,6 +2324,27 @@ function updateWizPrices() {
   if (chkBoya && loa) { total += boyaPrice; count++; }
   if (chkZehirli && loa) { total += zehirliPrice; count++; }
 
+  const workshops = ['elektrik', 'doseme', 'tesisat', 'polyester'];
+  workshops.forEach(w => {
+    const chkEl = document.getElementById('wizChk-' + w);
+    if (chkEl && chkEl.checked && currentWorkshopPkgs[w]) {
+      const pkg = currentWorkshopPkgs[w];
+      const pkgTotal = (pkg.items || []).reduce((acc, item) => acc + (item.quantity * item.price), 0);
+      total += pkgTotal;
+      count++;
+    }
+
+    const data = getAutomationData();
+    const jobs = (data.workshopJobs || {})[w] || [];
+    jobs.forEach((job, idx) => {
+      const chk = document.getElementById(`wizJobChk-${w}-${idx}`);
+      if (chk && chk.checked) {
+        total += job.price;
+        count++;
+      }
+    });
+  });
+
   document.getElementById('wizTotal').textContent = total + ' €';
   document.getElementById('wizSelectedCount').textContent = count;
 
@@ -2196,8 +2355,135 @@ function updateWizPrices() {
   if (cardZehirli) cardZehirli.style.borderColor = (chkZehirli && loa) ? '#0ea5e9' : '#cbd5e1';
 }
 
+let currentWorkshopPkgs = {};
+
+function populateWizWorkshopSelects() {
+  const data = getAutomationData();
+  const pkgsObj = data.workshopPackages || {};
+  
+  const workshops = ['elektrik', 'doseme', 'tesisat', 'polyester'];
+  workshops.forEach(w => {
+    const sel = document.getElementById('wizPkgSelect-' + w);
+    if (!sel) return;
+    const list = pkgsObj[w] || [];
+    sel.innerHTML = '<option value="">Seçiniz...</option>' + 
+      list.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+    
+    // Clear preview
+    const previewEl = document.getElementById('wizPkgPreview-' + w);
+    if (previewEl) previewEl.innerHTML = '';
+
+    populateWizWorkshopJobs(w);
+  });
+}
+
+function populateWizWorkshopJobs(w) {
+  const container = document.getElementById('wizJobsContainer-' + w);
+  if (!container) return;
+  
+  const data = getAutomationData();
+  const jobs = (data.workshopJobs || {})[w] || [];
+  
+  if (jobs.length === 0) {
+    container.innerHTML = `<div style="font-size:12px; color:#94a3b8; text-align:center; padding:15px; border:1px dashed #cbd5e1; border-radius:8px;">Kayıtlı standart iş yok.</div>`;
+    return;
+  }
+  
+  container.innerHTML = jobs.map((job, idx) => `
+    <label style="display:flex; align-items:center; gap:10px; background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px 12px; cursor:pointer; font-size:12px; transition:all 0.2s; user-select:none;" id="wizJobCard-${w}-${idx}">
+      <input type="checkbox" id="wizJobChk-${w}-${idx}" onchange="toggleWizJob('${w}', ${idx})" style="width:16px;height:16px;accent-color:#0ea5e9;">
+      <div style="flex:1;">
+        <div style="font-weight:600; color:#0f2438;">${esc(job.name)}</div>
+        <div style="font-size:10px; color:#64748b; margin-top:2px;">Birim: ${esc(job.unit || 'Saat')}</div>
+      </div>
+      <div style="font-weight:700; color:#0ea5e9; font-size:13px;">${job.price} €</div>
+    </label>
+  `).join('');
+}
+
+function toggleWizJob(w, idx) {
+  const chk = document.getElementById(`wizJobChk-${w}-${idx}`);
+  const card = document.getElementById(`wizJobCard-${w}-${idx}`);
+  if (!chk || !card) return;
+  
+  if (chk.checked) {
+    card.style.borderColor = '#0ea5e9';
+    card.style.background = '#f0f9ff';
+  } else {
+    card.style.borderColor = '#cbd5e1';
+    card.style.background = '#fff';
+  }
+  updateWizPrices();
+}
+
+function renderWizPkgPreview(w) {
+  const sel = document.getElementById('wizPkgSelect-' + w);
+  const previewEl = document.getElementById('wizPkgPreview-' + w);
+  if (!sel || !previewEl) return;
+  
+  const pkgId = sel.value;
+  if (!pkgId) {
+    previewEl.innerHTML = '';
+    currentWorkshopPkgs[w] = null;
+    updateWizPrices();
+    return;
+  }
+  
+  const data = getAutomationData();
+  const list = (data.workshopPackages || {})[w] || [];
+  const pkg = list.find(p => p.id === pkgId);
+  if (!pkg) {
+    previewEl.innerHTML = '';
+    currentWorkshopPkgs[w] = null;
+    updateWizPrices();
+    return;
+  }
+  
+  currentWorkshopPkgs[w] = pkg;
+  
+  let total = 0;
+  let html = `<div style="background:#fff; border:2px solid #0ea5e9; border-radius:10px; padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div style="font-weight:700; color:#0f2438;">📦 ${esc(pkg.name)}</div>
+      <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer;">
+        <input type="checkbox" id="wizChk-${w}" checked onchange="updateWizPrices()" style="width:16px;height:16px;accent-color:#0ea5e9;"> Teklife Ekle
+      </label>
+    </div>
+    ${pkg.description ? `<p style="font-size:12px; color:#64748b; margin-bottom:12px;">${esc(pkg.description)}</p>` : ''}
+    <table style="width:100%; font-size:12px; border-collapse:collapse; margin-bottom:12px;">
+      <tr style="border-bottom:1px solid #e2e8f0; color:#64748b;">
+        <th style="text-align:left; padding-bottom:6px;">Tür</th>
+        <th style="text-align:left; padding-bottom:6px;">Parça No</th>
+        <th style="text-align:left; padding-bottom:6px;">Açıklama / Kalem</th>
+        <th style="text-align:center; padding-bottom:6px;">Miktar</th>
+        <th style="text-align:right; padding-bottom:6px;">Fiyat</th>
+      </tr>`;
+      
+  (pkg.items || []).forEach(item => {
+    total += item.quantity * item.price;
+    html += `<tr style="border-bottom:1px solid #f1f5f9;">
+      <td style="padding:6px 0; color:#64748b; font-weight:600;">${item.type === 'iscilik' ? 'İşçilik' : 'Malzeme'}</td>
+      <td style="padding:6px 0;">${esc(item.partNumber || '—')}</td>
+      <td style="padding:6px 0;">${esc(item.description || '—')}</td>
+      <td style="text-align:center; padding:6px 0;">${item.quantity}</td>
+      <td style="text-align:right; padding:6px 0;">${item.price} €</td>
+    </tr>`;
+  });
+  
+  html += `</table>
+    <div style="display:flex; justify-content:space-between; font-size:14px; padding-top:8px; border-top:1px dashed #cbd5e1;">
+      <span style="font-weight:600; color:#0ea5e9;">Paket Toplamı:</span>
+      <b style="color:#0ea5e9;">${total} €</b>
+    </div>
+  </div>`;
+  
+  previewEl.innerHTML = html;
+  updateWizPrices();
+}
+
 function openWizardModal() {
   renderWizEngineOptions();
+  populateWizWorkshopSelects();
   switchWizTab('motor');
   document.getElementById('wizEngineModel').value = '';
   document.getElementById('wizEngineInterval').value = '';
@@ -2208,11 +2494,48 @@ function openWizardModal() {
   document.getElementById('wizCrmBoat').textContent      = (quote.customer.boat || '') + (quote.customer.model ? ' ' + quote.customer.model : '') || '—';
   document.getElementById('wizCrmCustomer').textContent  = quote.customer.name  || '—';
   document.getElementById('wizCrmLoa').textContent       = quote.customer.loa       ? quote.customer.loa + ' ft' : '—';
-  document.getElementById('wizCrmMotorType').textContent = quote.customer.kuyruk   || '—';
 
   if (quote.customer.loa) {
     const b = mapLoaToBucket(quote.customer.loa);
     if (b) document.getElementById('wizLoa').value = b;
+  }
+
+  const cleanStr = str => str.replace(/[^A-Z0-9]/g, '');
+  const crmMotorModel = (quote.customer.motor_model || '').trim().toUpperCase();
+  if (crmMotorModel) {
+    const sel = document.getElementById('wizEngineModel');
+    if (sel) {
+      const cleanCrm = cleanStr(crmMotorModel);
+      for (const opt of sel.options) {
+        const val = opt.value.trim().toUpperCase();
+        if (val) {
+          const cleanOpt = cleanStr(val);
+          if (cleanCrm.includes(cleanOpt) || cleanOpt.includes(cleanCrm)) {
+            sel.value = opt.value;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  const crmInterval = quote.customer.detected_interval || '';
+  if (crmInterval) {
+    const intSel = document.getElementById('wizEngineInterval');
+    if (intSel) {
+      intSel.value = crmInterval;
+    }
+  }
+
+  const motorInfo = quote.customer.motor_model || '';
+  const hpInfo = quote.customer.motor_hp ? quote.customer.motor_hp + ' HP' : '';
+  const driveInfo = quote.customer.kuyruk || '';
+  const details = [motorInfo, hpInfo, driveInfo].filter(Boolean).join(' · ');
+  const mTypeEl = document.getElementById('wizCrmMotorType');
+  if (mTypeEl) mTypeEl.textContent = details || '—';
+
+  if (document.getElementById('wizEngineModel').value && document.getElementById('wizEngineInterval').value) {
+    renderWizEngineParts();
   }
 
   ['wizLoa','wizChkBoya','wizChkZehirli'].forEach(id => {
@@ -2249,6 +2572,8 @@ function applyWizard() {
     }
   };
 
+  let addedAny = false;
+
   // ─── Motor Bakımı ───
   if (chkEngine && model && interval && currentEngineParts.length > 0) {
     const s = newService();
@@ -2262,12 +2587,24 @@ function applyWizard() {
       s.labour.push({ id: uid(), desc: "İmpeller Değişimi (İşçilik)", qty: 1, unit: "EACH", price: wizPrices.impeller[bucket], opt: 0 });
     }
 
+    const data = getAutomationData();
+    const meta = (data.engineMeta?.[model]?.[`interval_${interval}`]) || {};
+    let notesText = meta.description || '';
+    if (meta.checklist) {
+      const list = meta.checklist.split('\n').map(x => x.trim()).filter(Boolean);
+      if (list.length > 0) {
+        notesText += (notesText ? '\n\n' : '') + 'Yapılacaklar Kontrol Listesi:\n' + list.map(item => `[ ] ${item}`).join('\n');
+      }
+    }
+    s.notes = notesText;
+
     currentEngineParts.forEach(p => {
       s.materials.push({ id: uid(), code: p.partNumber || "", desc: p.description, qty: p.quantity, unit: p.description.includes("Yağı") || p.description.includes("Coolant") ? "LT" : "EACH", price: p.price, opt: 0 });
     });
     
     clearEmpty();
     quote.services.push(s);
+    addedAny = true;
   }
 
   // ─── Borda Pasta & Cila ───
@@ -2277,6 +2614,7 @@ function applyWizard() {
     if (wizPrices.pasta_cila[loa]) s.labour.push({ id: uid(), desc: "Borda Pasta & Cila Uygulaması (İşçilik + Sarf)", qty: 1, unit: "EACH", price: wizPrices.pasta_cila[loa], opt: 0 });
     clearEmpty();
     quote.services.push(s);
+    addedAny = true;
   }
 
   // ─── Zehirli Boya ───
@@ -2286,9 +2624,67 @@ function applyWizard() {
     if (wizPrices.zehirli[loa]) s.labour.push({ id: uid(), desc: "Alt yıkama, zımpara ve zehirli boya uygulaması (İşçilik + Sarf)", qty: 1, unit: "EACH", price: wizPrices.zehirli[loa], opt: 0 });
     clearEmpty();
     quote.services.push(s);
+    addedAny = true;
   }
 
-  if (!chkEngine && !chkBoya && !chkZehirli) { alert('Lütfen en az bir paket seçin.'); return; }
+  // ─── Atölye Paketleri ───
+  const workshops = ['elektrik', 'doseme', 'tesisat', 'polyester'];
+  const wLabels = { elektrik: 'Elektrik', doseme: 'Döşeme & Yelken', tesisat: 'Tesisat', polyester: 'Polyester & GRP' };
+  workshops.forEach(w => {
+    const chkEl = document.getElementById('wizChk-' + w);
+    if (chkEl && chkEl.checked && currentWorkshopPkgs[w]) {
+      const pkg = currentWorkshopPkgs[w];
+      if (pkg.items && pkg.items.length > 0) {
+        clearEmpty();
+        const s = newService();
+        s.title = `${wLabels[w]} - ${pkg.name}`;
+        s.notes = pkg.description || '';
+        
+        pkg.items.forEach(item => {
+          if (item.type === 'iscilik') {
+            s.labour.push({ id: uid(), desc: item.description, qty: item.quantity, unit: "EACH", price: item.price, opt: 0 });
+          } else {
+            s.materials.push({ id: uid(), code: item.partNumber || '', desc: item.description, qty: item.quantity, unit: "EACH", price: item.price, opt: 0 });
+          }
+        });
+        quote.services.push(s);
+        addedAny = true;
+      }
+    }
+  });
+
+  // ─── Atölye Standart İşleri ───
+  workshops.forEach(w => {
+    const data = getAutomationData();
+    const jobs = (data.workshopJobs || {})[w] || [];
+    const checkedJobs = [];
+    jobs.forEach((job, idx) => {
+      const chk = document.getElementById(`wizJobChk-${w}-${idx}`);
+      if (chk && chk.checked) {
+        checkedJobs.push(job);
+      }
+    });
+    
+    if (checkedJobs.length > 0) {
+      clearEmpty();
+      const s = newService();
+      s.title = `🛠️ ${wLabels[w]} - Standart İşler`;
+      checkedJobs.forEach(job => {
+        s.labour.push({
+          id: uid(),
+          desc: job.name,
+          qty: 1,
+          unit: job.unit || "Saat",
+          price: job.price,
+          opt: 0
+        });
+      });
+      quote.services.push(s);
+      addedAny = true;
+    }
+  });
+
+  if (!addedAny) { alert('Lütfen en az bir paket seçin.'); return; }
 
   renderServices();
   save(false, true);

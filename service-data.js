@@ -3158,7 +3158,85 @@ const SERVICE_AUTOMATION_DATA = {
     "D8-600": 600,
     "D8-700": 700,
   },
-  "partsLibrary": []
+  "partsLibrary": [],
+  "workshopPackages": {
+    "elektrik": [
+      {
+        "id": "ep_1",
+        "name": "Servis Aküsü Değişimi",
+        "description": "2 adet 100Ah AGM Servis Aküsü değişimi ve kutup başı temizliği",
+        "items": [
+          { "partNumber": "V-100AGM", "description": "Varta 100Ah AGM Akü", "quantity": 2, "price": 210, "type": "malzeme" },
+          { "partNumber": "LAB-EL01", "description": "Akü Değişim İşçiliği", "quantity": 1, "price": 60, "type": "iscilik" }
+        ]
+      },
+      {
+        "id": "ep_2",
+        "name": "VHF Telsiz Montajı",
+        "description": "VHF marin telsiz ve anten montajı, hat çekimi",
+        "items": [
+          { "partNumber": "RAY-53", "description": "Raymarine Ray53 VHF Telsiz", "quantity": 1, "price": 450, "type": "malzeme" },
+          { "partNumber": "ANT-VHF", "description": "Glomex VHF Anten 1.5m", "quantity": 1, "price": 95, "type": "malzeme" },
+          { "partNumber": "LAB-EL02", "description": "Kablo Çekim ve Montaj İşçiliği", "quantity": 3, "price": 50, "type": "iscilik" }
+        ]
+      }
+    ],
+    "doseme": [
+      {
+        "id": "dp_1",
+        "name": "Bimini Tente Yenileme",
+        "description": "Sunbrella kumaş ile bimini tente dikimi ve montajı",
+        "items": [
+          { "partNumber": "KUM-SUN", "description": "Sunbrella Tente Kumaşı (Metre)", "quantity": 8, "price": 45, "type": "malzeme" },
+          { "partNumber": "LAB-DOS01", "description": "Tente Dikim ve Şablon İşçiliği", "quantity": 1, "price": 350, "type": "iscilik" }
+        ]
+      }
+    ],
+    "tesisat": [
+      {
+        "id": "tp_1",
+        "name": "Maceratör Pompa Değişimi",
+        "description": "Pis su maceratör pompası değişimi ve hortum kelepçe kontrolü",
+        "items": [
+          { "partNumber": "JAB-37010", "description": "Jabsco Maceratör Pompa 12V", "quantity": 1, "price": 280, "type": "malzeme" },
+          { "partNumber": "LAB-TES01", "description": "Pompa Sökme-Takma İşçiliği", "quantity": 2, "price": 60, "type": "iscilik" }
+        ]
+      }
+    ],
+    "polyester": [
+      {
+        "id": "pop_1",
+        "name": "Gövde Jelkot Çizik Tamiri",
+        "description": "Borda veya karina üzerindeki lokal jelkot hasarlarının giderilmesi",
+        "items": [
+          { "partNumber": "JK-WHITE", "description": "Marin Jelkot Beyaz (Kg)", "quantity": 1, "price": 35, "type": "malzeme" },
+          { "partNumber": "LAB-POL01", "description": "Jelkot Yama, Zımpara ve Pasta İşçiliği", "quantity": 4, "price": 50, "type": "iscilik" }
+        ]
+      }
+    ]
+  },
+  "workshopJobs": {
+    "elektrik": [
+      { "name": "Elektrik Arıza Tespit & Kablolama", "unit": "Saat", "price": 60 },
+      { "name": "Servis Aküsü Montajı (Grup)", "unit": "Adet", "price": 80 },
+      { "name": "İnvertör / Şarj Cihazı Kurulumu", "unit": "Adet", "price": 150 }
+    ],
+    "doseme": [
+      { "name": "Kışlık Tente Sökme / Takma", "unit": "Adet", "price": 120 },
+      { "name": "Döşeme Temizliği & Koruyucu Uygulama", "unit": "Saat", "price": 40 },
+      { "name": "Yelken Bakım & Dikiş Kontrolü", "unit": "Adet", "price": 200 }
+    ],
+    "tesisat": [
+      { "name": "Sintine Pompası Yenileme", "unit": "Adet", "price": 75 },
+      { "name": "Pis Su Deposu Maceratör Bakımı", "unit": "Adet", "price": 110 },
+      { "name": "Tatlı Su Hidrofor Kurulumu", "unit": "Adet", "price": 90 }
+    ],
+    "polyester": [
+      { "name": "Ozmoz Kontrolü & Jelkot Tamiri", "unit": "Metrekare", "price": 180 },
+      { "name": "Fiberglas Gövde Çatlak Onarımı", "unit": "Saat", "price": 70 },
+      { "name": "Polyester Kaide Mukavemet Güçlendirme", "unit": "Adet", "price": 250 }
+    ]
+  }
 };
 // Model kodundan marka etiketi: D+rakam ile başlayanlar Volvo Penta (D1-13...D8-700),
 // diğer seriler Yanmar (GM, YM, JH, LH, LV, BY, CX, LY).
